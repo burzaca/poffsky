@@ -1,0 +1,10 @@
+# POFFSKY review shots — fixed camera poses used for the look loop.
+# Format: name | camera x,y,z | yaw (radians) | pitch (radians) | note
+# Used by tools/capture.mjs and by the browser harness:
+#   http://127.0.0.1:8777/?shot=<name>
+hero_close       6.0 3.0 8.0    2.36 0.10   hero and a poff in frame, checks character readability
+ranch_wide      -34.0 12.0 -26.0 0.68 0.35   skyport, hut, pens: does the ranch read as a place
+pen_view         22.0 5.0 22.0  2.36 0.30   a corral with poffs inside: are poffs readable at play distance
+island_edge     38.0 6.0 30.0   -2.4 0.05   island rim, cloud sea, wind road: is the sky legible
+sky_ride         60.0 22.0 40.0  1.9 0.15   mid-air over a gust ribbon: motion and silhouette
+night_mood       -6.0 6.0 -2.0   0.78 0.18   night palette, wraiths, lanterns: is dark still readable

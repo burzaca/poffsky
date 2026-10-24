@@ -1,0 +1,111 @@
+:root{
+  --ink:#20222e; --paper:#fff7e8; --sun:#ffb347; --leaf:#7fd66b; --sky:#8fd3ff;
+  --panel:rgba(28,30,42,.72); --edge:rgba(255,247,232,.18); --good:#8ef07a; --bad:#ff7a9c;
+  --font: ui-rounded, "Segoe UI", system-ui, -apple-system, "Helvetica Neue", sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#0d1020;font-family:var(--font);color:var(--paper)}
+canvas#game{position:fixed;inset:0;display:block}
+.hidden{display:none !important}
+kbd{display:inline-block;padding:1px 6px;border-radius:6px;background:rgba(255,247,232,.12);border:1px solid var(--edge);font:600 12px/1.6 var(--font)}
+
+/* ---------- HUD ---------- */
+#hud{position:fixed;inset:0;pointer-events:none;user-select:none}
+.panel{background:var(--panel);border:1px solid var(--edge);border-radius:14px;padding:8px 12px;
+  backdrop-filter:blur(6px);box-shadow:0 6px 24px rgba(0,0,0,.28)}
+.hud-top{position:absolute;top:14px;left:14px;display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;max-width:70vw}
+.wallet{display:flex;align-items:center;gap:8px;font-size:18px}
+.wallet b{font-variant-numeric:tabular-nums}
+.sep{width:1px;height:18px;background:var(--edge);margin:0 2px}
+.ico{width:18px;height:18px;border-radius:50%;display:inline-block}
+.down-ico{background:radial-gradient(circle at 35% 30%,#fff,#dfe7ff 60%,#b9c6ee)}
+.coin-ico{background:radial-gradient(circle at 35% 30%,#fff6c8,#ffcb52 60%,#c8912a)}
+.clock{display:flex;flex-direction:column;gap:4px;font-size:13px;min-width:170px}
+.clockbar{height:5px;border-radius:4px;background:rgba(255,255,255,.14);overflow:hidden}
+.clockbar i{display:block;height:100%;background:linear-gradient(90deg,#ffd98a,#ff9e6b 55%,#6f7bd6)}
+.contract{display:flex;flex-direction:column;gap:2px;font-size:13px;max-width:340px}
+.contract .cl{font-size:10px;letter-spacing:.16em;color:#ffd68a}
+.contract b{font-size:14px}
+#hud-contract-progress{color:#cfd6ff;font-size:12px}
+
+.hud-right{position:absolute;top:14px;right:14px;display:flex;flex-direction:column;gap:10px;align-items:flex-end}
+#minimap{border-radius:16px;border:1px solid var(--edge);background:rgba(20,22,34,.6);backdrop-filter:blur(4px)}
+.weather{font-size:13px;max-width:220px}
+.weather.storm{border-color:#ff8fb3;color:#ffd0e0}
+
+.hud-bottom{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;align-items:center}
+.prompt{font-size:15px;padding:7px 14px;border-radius:999px;background:var(--panel);border:1px solid var(--edge);opacity:0;transition:opacity .18s}
+.prompt.on{opacity:1}
+.tank{width:230px;height:9px;border-radius:9px;background:rgba(0,0,0,.42);border:1px solid var(--edge);overflow:hidden;opacity:.25;transition:opacity .2s}
+.tank.on{opacity:1}
+.tank i{display:block;height:100%;width:0%;background:linear-gradient(90deg,#8fd3ff,#c9f2ff)}
+
+#toasts{position:absolute;right:16px;bottom:18px;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+.toast{background:var(--panel);border:1px solid var(--edge);border-left:3px solid var(--sun);border-radius:12px;
+  padding:8px 12px;font-size:13px;max-width:330px;animation:tin .25s ease-out;box-shadow:0 6px 20px rgba(0,0,0,.3)}
+.toast.good{border-left-color:var(--good)} .toast.bad{border-left-color:var(--bad)}
+.toast.out{animation:tout .3s forwards}
+@keyframes tin{from{transform:translateX(24px);opacity:0}to{transform:none;opacity:1}}
+@keyframes tout{to{transform:translateX(24px);opacity:0}}
+
+/* ---------- dialogue ---------- */
+#dialogue{position:absolute;left:50%;bottom:26px;transform:translateX(-50%);width:min(760px,92vw);
+  display:flex;gap:14px;background:rgba(20,22,34,.86);border:1px solid var(--edge);border-radius:18px;padding:14px;
+  backdrop-filter:blur(8px);box-shadow:0 12px 40px rgba(0,0,0,.45)}
+.dlg-portrait{width:84px;height:84px;border-radius:14px;flex:0 0 auto;background:#2a2d40;border:1px solid var(--edge)}
+.dlg-body{flex:1;min-width:0}
+.dlg-name{font-size:13px;letter-spacing:.14em;color:#ffd68a;margin-bottom:4px}
+.dlg-text{font-size:16px;line-height:1.5;min-height:66px;white-space:pre-wrap}
+.dlg-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.dlg-actions button, .shop-head, #shop-items button, #board-items button{font-family:var(--font)}
+.dlg-actions button{background:rgba(255,247,232,.08);border:1px solid var(--edge);color:var(--paper);
+  padding:7px 12px;border-radius:10px;cursor:pointer;font-size:14px}
+.dlg-actions button:hover{background:rgba(255,247,232,.18)}
+
+/* ---------- shop / board ---------- */
+#shop,#board{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:min(560px,92vw);
+  background:rgba(18,20,32,.92);border:1px solid var(--edge);border-radius:18px;padding:16px;pointer-events:auto;
+  box-shadow:0 20px 60px rgba(0,0,0,.55)}
+.shop-head{display:flex;justify-content:space-between;align-items:center;font-size:17px;margin-bottom:12px}
+.shop-head .hint{font-size:12px;color:#9aa3c4}
+#shop-items,#board-items{display:flex;flex-direction:column;gap:8px;max-height:52vh;overflow:auto}
+#shop-items button,#board-items button{display:flex;justify-content:space-between;gap:12px;text-align:left;
+  background:rgba(255,247,232,.06);border:1px solid var(--edge);color:var(--paper);padding:10px 12px;border-radius:12px;cursor:pointer}
+#shop-items button:hover,#board-items button:hover{background:rgba(255,247,232,.14)}
+#shop-items button:disabled{opacity:.42;cursor:not-allowed}
+.it-name{font-weight:700} .it-sub{font-size:12px;color:#aab3d4;margin-top:2px}
+.it-cost{font-variant-numeric:tabular-nums;color:#ffd68a;white-space:nowrap}
+.shop-foot{margin-top:12px;font-size:13px;color:#ffd68a}
+#board-items .done{opacity:.5}
+
+/* ---------- title / pause ---------- */
+#title,#pause{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:20;
+  background:radial-gradient(1200px 700px at 50% 20%,#3a4a86 0%,#1a1d33 55%,#101226 100%)}
+.title-inner,.pause-inner{max-width:720px;padding:28px 32px;text-align:center}
+#title h1{font-size:clamp(52px,11vw,104px);margin:0;letter-spacing:.06em;
+  background:linear-gradient(180deg,#fff3c4,#ffb347 55%,#ff7a9c);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 6px 0 rgba(0,0,0,.25))}
+.tag{margin:.2em 0 1.2em;letter-spacing:.32em;text-transform:uppercase;color:#9fb0e6;font-size:13px}
+.blurb{color:#d8dcf0;line-height:1.6;margin:0 auto 20px;max-width:560px}
+.keys{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;text-align:left;
+  font-size:13px;color:#c3c9e6;margin:0 auto 22px;max-width:640px}
+.keys div{background:rgba(255,247,232,.05);border:1px solid var(--edge);border-radius:10px;padding:8px 10px}
+button#btn-start,button#btn-resume,button#btn-continue,button#btn-save{font-size:17px;font-weight:700;padding:12px 26px;border-radius:999px;
+  border:0;background:linear-gradient(180deg,#ffce6b,#ff9e4d);color:#2a1c07;cursor:pointer;margin:4px;
+  box-shadow:0 8px 24px rgba(255,158,77,.35)}
+button.ghost{background:rgba(255,247,232,.1);color:var(--paper);border:1px solid var(--edge);box-shadow:none}
+button:hover{transform:translateY(-1px)}
+.foot{margin-top:22px;font-size:12px;color:#7f88ad}
+#loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:30;
+  background:#101226;color:#c9d2f5;font-size:15px;letter-spacing:.1em}
+@media (max-width:760px){ .hud-right{display:none} .hud-top{max-width:96vw} }
+
+/* ---------- touch controls ---------- */
+#touch{position:absolute;inset:0;pointer-events:none}
+#stick{position:absolute;left:22px;bottom:26px;width:120px;height:120px;border-radius:50%;
+  background:rgba(20,22,34,.45);border:1px solid var(--edge);pointer-events:auto;touch-action:none}
+#stick-knob{width:56px;height:56px;border-radius:50%;margin:32px;background:rgba(255,247,232,.35);border:1px solid var(--edge)}
+.touch-btns{position:absolute;right:18px;bottom:22px;display:grid;grid-template-columns:1fr 1fr;gap:10px;pointer-events:auto}
+.touch-btns button{width:86px;height:56px;border-radius:14px;border:1px solid var(--edge);background:rgba(28,30,42,.7);
+  color:var(--paper);font:700 12px/1 var(--font);touch-action:none}
+.touch-btns button:active{background:rgba(255,214,138,.35)}

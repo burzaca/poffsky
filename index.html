@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>POFFSKY — a sky-ranching sandbox</title>
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='17' r='11' fill='%23ffb347'/><circle cx='12' cy='14' r='2.4' fill='%23222'/><circle cx='20' cy='14' r='2.4' fill='%23222'/><path d='M11 21q5 4 10 0' stroke='%23222' stroke-width='1.8' fill='none' stroke-linecap='round'/></svg>">
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<div id="hud" class="hidden">
+  <div class="hud-top">
+    <div class="panel wallet">
+      <span class="ico down-ico"></span><b id="hud-down">0</b>
+      <span class="sep"></span>
+      <span class="ico coin-ico"></span><b id="hud-coins">0</b>
+    </div>
+    <div class="panel clock">
+      <span id="hud-day">Day 1</span><span class="sep"></span><span id="hud-time">Morning</span>
+      <div class="clockbar"><i id="clock-fill"></i></div>
+    </div>
+    <div class="panel contract" id="hud-contract">
+      <span class="cl">CONTRACT</span><b id="hud-contract-title">Read the notice board</b>
+      <span id="hud-contract-progress"></span>
+    </div>
+  </div>
+
+  <div class="hud-right">
+    <canvas id="minimap" width="184" height="184"></canvas>
+    <div class="panel weather hidden" id="hud-weather"></div>
+  </div>
+
+  <div class="hud-bottom">
+    <div class="prompt" id="prompt"></div>
+    <div class="tank"><i id="tank-fill"></i></div>
+  </div>
+
+  <div id="toasts"></div>
+
+  <div id="dialogue" class="hidden">
+    <div class="dlg-portrait" id="dlg-portrait"></div>
+    <div class="dlg-body">
+      <div class="dlg-name" id="dlg-name"></div>
+      <div class="dlg-text" id="dlg-text"></div>
+      <div class="dlg-actions" id="dlg-actions"></div>
+    </div>
+  </div>
+
+  <div id="shop" class="hidden">
+    <div class="shop-head"><b id="shop-title">Shop</b><span class="hint">Esc to close</span></div>
+    <div id="shop-items"></div>
+    <div class="shop-foot"><span id="shop-coins"></span></div>
+  </div>
+
+  <div id="board" class="hidden">
+    <div class="shop-head"><b id="board-title">Notice board</b><span class="hint">Esc to close</span></div>
+    <div id="board-items"></div>
+  </div>
+
+  <div id="touch" class="hidden">
+    <div id="stick"><div id="stick-knob"></div></div>
+    <div class="touch-btns">
+      <button id="btn-bellows">BELLOWS</button>
+      <button id="btn-jump">JUMP</button>
+      <button id="btn-dash">DASH</button>
+      <button id="btn-talk">TALK</button>
+    </div>
+  </div>
+</div>
+
+<div id="title">
+  <div class="title-inner">
+    <h1>POFFSKY</h1>
+    <p class="tag">a sky-ranching sandbox</p>
+    <p class="blurb">The Drift is full of balloon-creatures called <b>poffs</b>. They float away if you
+      don't pen them. Feed them, herd them with your <b>Bellows</b>, breed strange hybrids,
+      and make the Skyport pay for your fluff — before the <b>Great Gust</b> comes.</p>
+    <div class="keys">
+      <div><kbd>W A S D</kbd> run</div><div><kbd>Shift</kbd> sprint · <kbd>Ctrl</kbd> dash</div>
+      <div><kbd>Space</kbd> jump / double-jump</div><div><kbd>Hold E</kbd> suck with the Bellows</div>
+      <div><kbd>Release E</kbd> blow it away</div><div><kbd>F</kbd> talk / interact</div>
+      <div><kbd>M</kbd> contracts board</div><div><kbd>P</kbd> photograph</div>
+      <div><kbd>R</kbd> self-blast (needs the valve)</div><div><kbd>T</kbd> drop · <kbd>C</kbd> info</div>
+      <div><kbd>Esc</kbd> pause</div><div><kbd>Mouse</kbd> look (click to capture)</div>
+    </div>
+    <button id="btn-start">Start the morning</button>
+    <button id="btn-continue" class="ghost hidden">Continue ranch</button>
+    <p class="foot">Built by Anakin for muha7a · three.js · no downloaded assets, everything procedural</p>
+  </div>
+</div>
+
+<div id="pause" class="hidden">
+  <div class="pause-inner">
+    <h2>Paused</h2>
+    <div class="keys">
+      <div><kbd>W A S D</kbd> run</div><div><kbd>Shift</kbd> sprint · <kbd>Ctrl</kbd> dash</div>
+      <div><kbd>Space</kbd> jump / double-jump</div><div><kbd>Hold E / RMB</kbd> suck</div>
+      <div><kbd>Release</kbd> blow (empty blast herds too)</div><div><kbd>R</kbd> self-blast valve</div>
+      <div><kbd>F</kbd> talk / deliver</div><div><kbd>M</kbd> contracts</div><div><kbd>P</kbd> photograph</div>
+      <div><kbd>T</kbd> drop · <kbd>C</kbd> held info</div><div><kbd>Esc</kbd> resume</div>
+    </div>
+    <button id="btn-resume">Resume</button>
+    <button id="btn-save" class="ghost">Save ranch</button>
+  </div>
+</div>
+
+<div id="loading">Warming the Bellows…</div>
+
+<script type="module" src="src/main.js"></script>
+</body>
+</html>

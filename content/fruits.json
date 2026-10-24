@@ -1,0 +1,8 @@
+[
+  { "id": "puffberry", "name": "Puffberry", "color": "#ff8fb1", "grows_on": "thistledown", "price": 2, "feed_score": 1 },
+  { "id": "sunplum", "name": "Sunplum", "color": "#ffc04a", "grows_on": "orchard", "price": 3, "feed_score": 2 },
+  { "id": "emberfig", "name": "Emberfig", "color": "#ff6a3d", "grows_on": "ember", "price": 5, "feed_score": 2 },
+  { "id": "rimegrape", "name": "Rimegrape", "color": "#9fd8ff", "grows_on": "frost", "price": 6, "feed_score": 3 },
+  { "id": "honeyhusk", "name": "Honeyhusk", "color": "#ffe07a", "grows_on": "bloom", "price": 7, "feed_score": 3 },
+  { "id": "fizzleberry", "name": "Fizzleberry", "color": "#b48cff", "grows_on": "geyser", "price": 12, "feed_score": 5 }
+]

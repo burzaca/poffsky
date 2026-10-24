@@ -1,0 +1,122 @@
+[
+  {
+    "id": "pip",
+    "name": "Pip",
+    "role": "Skyport clerk",
+    "island": "thistledown",
+    "color": "#7a9cff",
+    "hat": "Tall flat-topped navy postal cap: a short cylinder crown on a stiff half-disc brim (thin flattened box), with a tiny brass bell (small gold sphere) pinned to the front.",
+    "lines": [
+      "Welcome to the Skyport. I am Pip. I have been Pip all day.",
+      "Down in, coins out. Upgrades are on the shelf. The shelf is not for sale. I checked.",
+      "The islands float because the clouds underneath are very polite. That is the official explanation. I wrote it.",
+      "Why did the poff fail its exam? Too much drift. I will see myself out. I am already at my desk.",
+      "Forecast says breezy. Forecast always says breezy. I suspect the forecast is a poff.",
+      "We are open at night. I am also open at night. Mostly my eyes.",
+      "That is a lot of down. I am stamping it with my most enthusiastic stamp. You cannot tell, but it is.",
+      "Zero coins. A clean slate. Try the Dandles out back. They shed when they giggle."
+    ],
+    "shop": [
+      { "id": "hop_boots", "name": "Hop Boots", "cost": 90, "kind": "upgrade", "effect": "player.jump+0.25" },
+      { "id": "glider", "name": "Patchwork Glider", "cost": 150, "kind": "upgrade", "effect": "player.glider=true" },
+      { "id": "gust_sails", "name": "Gust Sails", "cost": 200, "kind": "upgrade", "effect": "player.gust_ride+0.5" },
+      { "id": "fluff_scale", "name": "Honest Fluff Scale", "cost": 120, "kind": "upgrade", "effect": "market.sell_bonus+0.1" }
+    ]
+  },
+  {
+    "id": "marlow",
+    "name": "Marlow",
+    "role": "Ranch foreman",
+    "island": "thistledown",
+    "color": "#a0663c",
+    "hat": "Wide sun-faded straw hat: broad flat brim (thin wide cylinder), low rounded crown (squashed sphere), red band (torus) and one grey poff feather (stretched cone) tucked in the band.",
+    "lines": [
+      "There you are, Rook. Forty years I've kept poffs on the ground. Today you help. Grab that Bellows.",
+      "Fence, feed and fixings. Built every post on this ranch myself. Lean on 'em. They'll hold.",
+      "My granddad tied the first poff to a fencepost with his bootlace. Lost the boot. Kept the poff.",
+      "Poff walks into a barn. No it don't. Floats in. Bonks the rafters. Every time. Heh.",
+      "Wind's turning. Smell that? Check your gates and count the herd twice.",
+      "Snapwraiths come out after dark. Sweep the loose down, light the lanterns, then off to bed with ya.",
+      "Look at that purse. Hmph. Proud of ya, kid. Don't let it go to your hat.",
+      "Empty pockets? No shame in it. Feed 'em, pen 'em, wait. Ranch pays the patient."
+    ],
+    "shop": [
+      { "id": "corral_post", "name": "Sturdy Corral Post", "cost": 120, "kind": "upgrade", "effect": "corral.slots+1" },
+      { "id": "hobble_ribbons", "name": "Hobble Ribbons", "cost": 70, "kind": "upgrade", "effect": "corral.escape_chance-0.25" },
+      { "id": "puffberry_seed", "name": "Puffberry Seeds", "cost": 8, "kind": "seed", "effect": "plot.plant=puffberry" }
+    ]
+  },
+  {
+    "id": "tilda",
+    "name": "Tilda",
+    "role": "Self-appointed map maker",
+    "island": "orchard",
+    "color": "#ff7fb0",
+    "hat": "Paper pirate hat folded from her own map (flattened triangular wedge, cream with doodles), a yellow pencil (thin cylinder with pink sphere eraser) stuck through the side and a crooked star sticker on the front.",
+    "lines": [
+      "HI! You're Rook! I know because I drew you on my map. You're the little smudge. Hi again!",
+      "Map pins are three coins. Map pins with GLITTER are also three coins, but I like you more if you pick those.",
+      "There's an island past the ruins that only shows up on Tuesdays. Probably. I drew it just in case.",
+      "What do you call a poff with no fluff? A BALD BALLOON! Ha! Write that down! No, on the map!",
+      "Big clouds today! That one's a whale. That one's a whale too. They're ALL whales. Best weather ever.",
+      "I'm not sleepy. I'm resting my map eyes. Wake me up if a snapwraith does something cool.",
+      "You're RICH?? Can you buy a castle? Can I have a tower? Just a small tower. A medium tower.",
+      "No coins? That's okay. You can pay me in rocks. Rocks are basically coins. I decided."
+    ],
+    "shop": [
+      { "id": "glitter_pins", "name": "Glitter Map Pins", "cost": 3, "kind": "upgrade", "effect": "map.pins+3" },
+      { "id": "sticker_compass", "name": "Sticker Compass", "cost": 30, "kind": "upgrade", "effect": "hud.compass=true" },
+      { "id": "secret_gust_map", "name": "Secret Gust Map", "cost": 45, "kind": "upgrade", "effect": "map.reveal=gusts" },
+      { "id": "sunplum_seed", "name": "Sunplum Pits", "cost": 12, "kind": "seed", "effect": "plot.plant=sunplum" }
+    ]
+  },
+  {
+    "id": "bellwright",
+    "name": "The Bellwright",
+    "role": "Bellows tinkerer",
+    "island": "ember",
+    "color": "#d9a441",
+    "hat": "Dented copper welding helmet: half-sphere dome, flip-up visor (thin box hinged at the brow), two round goggle lenses (short cylinders) and a tiny chimney pipe (narrow cylinder) on top that puffs smoke.",
+    "lines": [
+      "Rook. Bellows. Here. Hm. Seal's good. Nozzle's good. You're good. Next.",
+      "Bigger tank. Longer reach. Harder blast. Pick one. Pick two. Pay me.",
+      "First Bellows: accordion, teakettle, stubbornness. Mine. Still works. Mostly.",
+      "Joke. Right. Why's the Bellows sad? Low pressure. ...That was it. Calibrated it myself.",
+      "Pressure's dropping. Gusts rising. Lean in. Blast down. Jump. Free height.",
+      "Night. Cold metal. Tight seals. Best tuning hours. Leave it. Back by dawn.",
+      "Coins. Plenty. Good. Got a prototype. Experimental. Wonderful. Interested?",
+      "No coin. Fine. Bring emberfigs. Forge loves 'em. I'll owe you a tweak."
+    ],
+    "shop": [
+      { "id": "tank_coil_1", "name": "Tank Coil", "cost": 80, "kind": "upgrade", "effect": "bellows.tank+1" },
+      { "id": "long_nozzle", "name": "Long Nozzle", "cost": 110, "kind": "upgrade", "effect": "bellows.range+2" },
+      { "id": "big_lungs", "name": "Big Lungs Blaster", "cost": 140, "kind": "upgrade", "effect": "bellows.force+0.25" },
+      { "id": "tank_coil_2", "name": "Tank Coil II", "cost": 200, "kind": "upgrade", "effect": "bellows.tank+1" }
+    ]
+  },
+  {
+    "id": "sable",
+    "name": "Sable",
+    "role": "Night trader",
+    "island": "ruins",
+    "color": "#3b2f6b",
+    "hat": "Tall midnight-purple top hat (cylinder on a thin wide disc) ringed with tiny glowing lanterns (small emissive spheres) and a crescent moon charm (half-torus) dangling from the brim.",
+    "lines": [
+      "Good evening, little courier. The stars are out, and so, at last, am I.",
+      "Seeds from islands that aren't on any map. Not even the small one's map. Especially not hers.",
+      "The Great Gust isn't angry, darling. It's only the sky stretching. Hold on to what you love.",
+      "A snapwraith once asked me for a discount. I told it, for you, everything is a steal.",
+      "Clear nights carry far. You can hear a fizzleberry ripening three islands away. Listen.",
+      "Ah, my hour. The moon sets the prices. I merely read them aloud.",
+      "Your purse has such a lovely weight to it. I have something lovely to lighten it. Shall we?",
+      "Empty-handed? Then take this for free: snapwraiths fear lantern light. Come back fuller, dear."
+    ],
+    "shop": [
+      { "id": "emberfig_seed", "name": "Emberfig Cuttings", "cost": 25, "kind": "seed", "effect": "plot.plant=emberfig" },
+      { "id": "rimegrape_seed", "name": "Rimegrape Pips", "cost": 30, "kind": "seed", "effect": "plot.plant=rimegrape" },
+      { "id": "honeyhusk_seed", "name": "Honeyhusk Kernels", "cost": 35, "kind": "seed", "effect": "plot.plant=honeyhusk" },
+      { "id": "fizzleberry_seed", "name": "Fizzleberry Spores", "cost": 60, "kind": "seed", "effect": "plot.plant=fizzleberry" },
+      { "id": "moonlantern", "name": "Moonlantern", "cost": 75, "kind": "upgrade", "effect": "corral.wraith_guard=true" }
+    ]
+  }
+]
