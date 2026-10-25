@@ -68,7 +68,10 @@ export function buildPoffMesh(species) {
   }
   g.add(deco);
   // blob shadow (fake, cheap)
-  const blob = new THREE.Mesh(new THREE.CircleGeometry(1, 14), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.18 }));
+  // Contact shadow only. The real cast shadow now comes from the sun, so this
+  // is deliberately faint - it exists to stop the poff looking detached when
+  // the sun is directly overhead and the cast shadow hides under it.
+  const blob = new THREE.Mesh(new THREE.CircleGeometry(1, 14), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.09 }));
   blob.rotation.x = -Math.PI / 2;
   g.userData.body = body; g.userData.blob = blob; g.userData.deco = deco;
   const s = species.size * POFF_SCALE;   // world scale: a poff is a beach ball, not a barn

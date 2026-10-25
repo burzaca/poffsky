@@ -49,6 +49,14 @@ class Game {
 
     // one look for everything: bake the recipe into any mesh that has no
     // colour attribute of its own (see look.js)
+    // Creatures and villagers cast their own shadows. Without this they glide
+    // over the ground weightlessly, which is the fastest way a 3D scene reads
+    // as fake. Blob shadows alone are not enough.
+    for (const root of [this.creatures.group, this.npcs.group]) {
+      if (!root) continue;
+      root.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+    }
+
     this.bakedMeshes = LOOKMOD.applyLookPass(this.scene, mulberry32(CFG.seed ^ 0x51ee));
 
     this.fruitSpawners = this.world.fruits.map(f => ({ ...f, timer: 0, active: true, mesh: null }));
