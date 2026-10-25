@@ -722,6 +722,10 @@ const SHOTS = {
 
 async function boot() {
   await Content.load();
+  // the loading veil sits above the title screen; it must come off as soon
+  // as the world data is in, otherwise the Start button is unreachable
+  const veil = document.getElementById('loading');
+  if (veil) veil.classList.add('hidden');
   const game = new Game(document.getElementById('game'));
   window.__poffsky = game;
   const btn = document.getElementById('btn-start');
@@ -754,6 +758,8 @@ async function boot() {
 }
 
 boot().catch(e => {
+  const veil = document.getElementById('loading');
+  if (veil) veil.classList.add('hidden');
   const el = document.getElementById('loading-text');
   window.__bootErr = String(e && e.stack || e);
   if (el) el.textContent = 'Could not start: ' + (e && e.message);
