@@ -28,75 +28,170 @@ export function moveBasis(yaw, inp) {
 import { clamp, damp, dampVec, TAU, angleLerp } from './util.js';
 import { toonMaterial } from './look.js';
 
+// A lathe profile: revolve a smooth outline. This is what separates a model
+// from a stack of primitives - a coat that tapers, a brim that curves, a boot
+// that rounds off. Points are [radius, height]; the first point should sit on
+// the axis (radius 0) if you want a closed bottom.
+function lathe(points, segments = 24) {
+  return new THREE.LatheGeometry(points.map(([r, y]) => new THREE.Vector2(Math.max(0, r), y)), segments);
+}
+
+// A smooth, slightly tapered limb. Capsules read as cylinders with caps; a
+// lathe lets the shoulder be wider than the wrist, which is what a sleeve does.
+function limb(topR, botR, len, seg = 14) {
+  const pts = [];
+  const steps = 10;
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const r = topR + (botR - topR) * t;
+    // round the ends so nothing terminates in a hard ring
+    const cap = Math.sin(Math.min(1, Math.min(t, 1 - t) * 4.5) * Math.PI * 0.5);
+    pts.push([Math.max(0.001, r * (0.72 + 0.28 * cap)), len * (0.5 - t)]);
+  }
+  return lathe(pts, seg);
+}
+
 export function buildHero() {
   const g = new THREE.Group();
-  const skin = toonMaterial({ color: 0xf0c8a0, flatShading: true });
-  const coat = toonMaterial({ color: 0x2f6f8f, flatShading: true });
-  const coat2 = toonMaterial({ color: 0x255a76, flatShading: true });
-  const dark = toonMaterial({ color: 0x2b2f3a, flatShading: true });
-  const accent = toonMaterial({ color: 0xffb347, flatShading: true });
+  // Smooth shading throughout. flatShading on low-segment primitives is exactly
+  // what made this read as a Roblox avatar.
+  const skin = toonMaterial({ color: 0xf2c9a4 });
+  const coat = toonMaterial({ color: 0x2f6f8f });
+  const coat2 = toonMaterial({ color: 0x24587a });
+  const dark = toonMaterial({ color: 0x2b2f3a });
+  const accent = toonMaterial({ color: 0xffb347 });
+  const leather = toonMaterial({ color: 0x6b4a2c });
+  const hairMat = toonMaterial({ color: 0x3a2a20 });
 
   const body = new THREE.Group(); g.add(body);
-  const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.32, 0.5, 3, 8), coat);
-  torso.position.y = 0.95; torso.castShadow = true; body.add(torso);
-  const skirt = new THREE.Mesh(new THREE.ConeGeometry(0.46, 0.62, 8), coat2);
-  skirt.position.y = 0.66; skirt.castShadow = true; body.add(skirt);
-  const scarf = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.09, 5, 10), accent);
-  scarf.position.y = 1.28; scarf.rotation.x = Math.PI / 2; body.add(scarf);
-  const scarfTail = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.42, 0.05), accent);
-  scarfTail.position.set(0.18, 1.1, 0.22); scarfTail.rotation.z = -0.3; body.add(scarfTail);
 
-  const head = new THREE.Group(); head.position.y = 1.5; body.add(head);
-  const skull = new THREE.Mesh(new THREE.SphereGeometry(0.28, 12, 10), skin);
-  skull.castShadow = true; head.add(skull);
-  const hatBrim = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.05, 12), toonMaterial({ color: 0x8a5a3a, flatShading: true }));
-  hatBrim.position.y = 0.2; head.add(hatBrim);
-  const hatTop = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.3, 0.26, 12), toonMaterial({ color: 0x9a6a45, flatShading: true }));
-  hatTop.position.y = 0.34; hatTop.castShadow = true; head.add(hatTop);
-  const band = new THREE.Mesh(new THREE.CylinderGeometry(0.305, 0.305, 0.07, 12), accent);
-  band.position.y = 0.23; head.add(band);
+  // Torso: a coat that is narrow at the chest, cinched at the belt and flares
+  // over the hips, instead of a capsule with a cone stuck under it.
+  const torso = new THREE.Mesh(lathe([
+    [0.001, 0.00], [0.34, 0.02], [0.37, 0.14], [0.33, 0.30],
+    [0.28, 0.44], [0.30, 0.56], [0.27, 0.66], [0.20, 0.74], [0.10, 0.79], [0.001, 0.81],
+  ]), coat);
+  torso.position.y = 0.62; torso.castShadow = true; body.add(torso);
+
+  // Coat hem: a separate skirt band so the flare reads as cloth, not a cone.
+  const hem = new THREE.Mesh(lathe([
+    [0.001, 0.00], [0.36, 0.01], [0.42, 0.10], [0.44, 0.22], [0.38, 0.30], [0.001, 0.31],
+  ]), coat2);
+  hem.position.y = 0.50; hem.castShadow = true; body.add(hem);
+
+  // Belt and buckle give the silhouette a waist, which the old rig lacked.
+  const belt = new THREE.Mesh(new THREE.TorusGeometry(0.315, 0.045, 8, 22), leather);
+  belt.position.y = 1.06; belt.rotation.x = Math.PI / 2; body.add(belt);
+  const buckle = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.09, 0.05), accent);
+  buckle.position.set(0, 1.06, 0.32); body.add(buckle);
+
+  const scarf = new THREE.Mesh(new THREE.TorusGeometry(0.235, 0.075, 10, 20), accent);
+  scarf.position.y = 1.40; scarf.rotation.x = Math.PI / 2; body.add(scarf);
+  const scarfTail = new THREE.Mesh(lathe([
+    [0.001, 0.00], [0.09, 0.02], [0.10, 0.20], [0.07, 0.36], [0.001, 0.38],
+  ]), accent);
+  scarfTail.position.set(0.16, 1.16, 0.20); scarfTail.rotation.z = -0.3; body.add(scarfTail);
+
+  const head = new THREE.Group(); head.position.y = 1.62; body.add(head);
+  // Head is slightly ovoid rather than a sphere, with a flattened face plane.
+  const skull = new THREE.Mesh(new THREE.SphereGeometry(0.235, 32, 24), skin);
+  skull.scale.set(1, 1.06, 0.96); skull.castShadow = true; head.add(skull);
+
+  // Hair: a cap over the crown plus a soft fringe, so the hat sits on hair.
+  const hair = new THREE.Mesh(lathe([
+    [0.001, 0.00], [0.16, 0.02], [0.235, 0.10], [0.245, 0.20], [0.20, 0.26], [0.001, 0.27],
+  ]), hairMat);
+  hair.position.y = 0.02; head.add(hair);
+  const fringe = new THREE.Mesh(new THREE.SphereGeometry(0.10, 16, 12), hairMat);
+  fringe.scale.set(1.9, 0.45, 0.7); fringe.position.set(0, 0.16, 0.17); head.add(fringe);
+
+  // Eyes: flattened sclera, pupil, and a specular highlight. Googly stickers
+  // with no highlight are a large part of the toy look.
   for (const sx of [-1, 1]) {
-    const e = new THREE.Mesh(new THREE.SphereGeometry(0.05, 6, 5), new THREE.MeshBasicMaterial({ color: 0x1a1a24 }));
-    e.position.set(0.11 * sx, 0.03, 0.26); head.add(e);
+    const white = new THREE.Mesh(new THREE.SphereGeometry(0.052, 16, 12), toonMaterial({ color: 0xf7f7fa }));
+    white.scale.set(1, 1.15, 0.55); white.position.set(0.098 * sx, 0.015, 0.205); head.add(white);
+    const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.026, 12, 10), new THREE.MeshBasicMaterial({ color: 0x1a1a24 }));
+    pupil.position.set(0.098 * sx, 0.012, 0.243); head.add(pupil);
+    const glint = new THREE.Mesh(new THREE.SphereGeometry(0.010, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+    glint.position.set(0.098 * sx + 0.012, 0.032, 0.256); head.add(glint);
+    const brow = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.014, 0.02), hairMat);
+    brow.position.set(0.098 * sx, 0.075, 0.212); brow.rotation.z = -0.12 * sx; head.add(brow);
   }
-  const pack = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.5, 0.26), toonMaterial({ color: 0x7a5638, flatShading: true }));
-  pack.position.set(0, 1.0, -0.36); pack.castShadow = true; body.add(pack);
-  const roll = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.44, 8), accent);
-  roll.rotation.z = Math.PI / 2; roll.position.set(0, 1.24, -0.36); body.add(roll);
+  const mouth = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.008, 6, 12, Math.PI), new THREE.MeshBasicMaterial({ color: 0x6b3f2c }));
+  mouth.position.set(0, -0.075, 0.215); mouth.rotation.z = Math.PI; head.add(mouth);
+  const nose = new THREE.Mesh(new THREE.SphereGeometry(0.032, 12, 10), skin);
+  nose.scale.set(0.8, 0.9, 1.1); nose.position.set(0, -0.02, 0.235); head.add(nose);
+
+  // Hat: a curved brim (lathe) instead of a flat cylinder disc.
+  const hatBrim = new THREE.Mesh(lathe([
+    [0.001, 0.16], [0.19, 0.15], [0.26, 0.11], [0.34, 0.05], [0.40, 0.00], [0.41, -0.02], [0.34, -0.03], [0.001, -0.04],
+  ]), leather);
+  hatBrim.position.y = 0.20; hatBrim.castShadow = true; head.add(hatBrim);
+  const hatTop = new THREE.Mesh(lathe([
+    [0.001, 0.00], [0.24, 0.01], [0.26, 0.10], [0.25, 0.22], [0.20, 0.30], [0.10, 0.34], [0.001, 0.35],
+  ]), toonMaterial({ color: 0x8a5a3a }));
+  hatTop.position.y = 0.24; hatTop.castShadow = true; head.add(hatTop);
+  const band = new THREE.Mesh(new THREE.TorusGeometry(0.255, 0.028, 8, 22), accent);
+  band.position.y = 0.30; band.rotation.x = Math.PI / 2; head.add(band);
+
+  // Pack: rounded, with a bedroll and straps, not a box behind the shoulders.
+  const pack = new THREE.Mesh(lathe([
+    [0.001, 0.00], [0.16, 0.02], [0.20, 0.14], [0.20, 0.34], [0.15, 0.44], [0.001, 0.46],
+  ]), leather);
+  pack.scale.set(1.5, 1, 0.75); pack.position.set(0, 0.86, -0.34); pack.castShadow = true; body.add(pack);
+  const roll = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.085, 0.42, 16), accent);
+  roll.rotation.z = Math.PI / 2; roll.position.set(0, 1.24, -0.34); body.add(roll);
+  for (const sx of [-1, 1]) {
+    const strap = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.34, 0.03), leather);
+    strap.position.set(0.15 * sx, 1.16, -0.28); strap.rotation.x = 0.12; body.add(strap);
+  }
 
   const legL = new THREE.Group(), legR = new THREE.Group();
   for (const [grp, sx] of [[legL, -1], [legR, 1]]) {
-    grp.position.set(0.16 * sx, 0.62, 0); body.add(grp);
-    const leg = new THREE.Mesh(new THREE.CapsuleGeometry(0.11, 0.4, 2, 6), dark);
-    leg.position.y = -0.3; leg.castShadow = true; grp.add(leg);
-    const boot = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.14, 0.3), toonMaterial({ color: 0x5a3f2a, flatShading: true }));
-    boot.position.set(0, -0.6, 0.05); grp.add(boot);
+    grp.position.set(0.15 * sx, 0.62, 0); body.add(grp);
+    const leg = new THREE.Mesh(limb(0.125, 0.095, 0.52), dark);
+    leg.position.y = -0.28; leg.castShadow = true; grp.add(leg);
+    // Boot: a rounded lathe with a sole, instead of a box.
+    const boot = new THREE.Mesh(lathe([
+      [0.001, 0.00], [0.13, 0.01], [0.15, 0.08], [0.14, 0.18], [0.11, 0.22], [0.001, 0.23],
+    ]), leather);
+    boot.scale.set(1, 1, 1.35); boot.position.set(0, -0.60, 0.04); boot.castShadow = true; grp.add(boot);
+    const sole = new THREE.Mesh(new THREE.BoxGeometry(0.30, 0.045, 0.40), dark);
+    sole.position.set(0, -0.615, 0.05); grp.add(sole);
   }
   const armL = new THREE.Group(), armR = new THREE.Group();
   for (const [grp, sx] of [[armL, -1], [armR, 1]]) {
-    grp.position.set(0.38 * sx, 1.2, 0); body.add(grp);
-    const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.09, 0.36, 2, 6), coat);
-    arm.position.y = -0.26; arm.castShadow = true; grp.add(arm);
-    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.1, 6, 5), skin);
-    hand.position.y = -0.5; grp.add(hand);
+    grp.position.set(0.36 * sx, 1.30, 0); body.add(grp);
+    const arm = new THREE.Mesh(limb(0.115, 0.075, 0.46), coat);
+    arm.position.y = -0.24; arm.castShadow = true; grp.add(arm);
+    const cuff = new THREE.Mesh(new THREE.TorusGeometry(0.082, 0.022, 8, 16), coat2);
+    cuff.position.y = -0.44; cuff.rotation.x = Math.PI / 2; grp.add(cuff);
+    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.085, 16, 12), skin);
+    hand.scale.set(1, 1.15, 0.85); hand.position.y = -0.52; grp.add(hand);
   }
 
   // the Bellows, held in the right hand
   const bellows = new THREE.Group();
-  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.16, 0.72, 8), toonMaterial({ color: 0xd8d3c8, flatShading: true }));
+  const barrel = new THREE.Mesh(lathe([
+    [0.001, 0.00], [0.10, 0.02], [0.13, 0.18], [0.155, 0.42], [0.165, 0.62], [0.12, 0.70], [0.001, 0.72],
+  ]), toonMaterial({ color: 0xd8d3c8 }));
   barrel.rotation.x = Math.PI / 2; bellows.add(barrel);
-  const bellowsBag = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 6), toonMaterial({ color: 0xff8a5c, flatShading: true }));
-  bellowsBag.scale.set(1, 1, 0.8); bellowsBag.position.z = -0.28; bellows.add(bellowsBag);
-  const muzzle = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.13, 0.16, 8), toonMaterial({ color: 0xffb347, flatShading: true }));
+  const bellowsBag = new THREE.Mesh(new THREE.SphereGeometry(0.19, 24, 18), toonMaterial({ color: 0xff8a5c }));
+  bellowsBag.scale.set(1, 1, 0.78); bellowsBag.position.z = -0.26; bellows.add(bellowsBag);
+  const muzzle = new THREE.Mesh(lathe([
+    [0.001, 0.00], [0.18, 0.01], [0.15, 0.08], [0.12, 0.14], [0.001, 0.15],
+  ]), toonMaterial({ color: 0xffb347 }));
   muzzle.rotation.x = Math.PI / 2; muzzle.position.z = 0.42; bellows.add(muzzle);
+  const grip = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.02, 8, 16), leather);
+  grip.position.set(0, -0.12, 0.02); bellows.add(grip);
   bellows.position.set(0, -0.5, 0.12);
   armR.add(bellows);
 
-  const blob = new THREE.Mesh(new THREE.CircleGeometry(0.55, 16), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.22 }));
+  const blob = new THREE.Mesh(new THREE.CircleGeometry(0.55, 24), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.22 }));
   blob.rotation.x = -Math.PI / 2;
 
   // glider cloth (hidden until unlocked)
-  const glider = new THREE.Mesh(new THREE.ConeGeometry(1.1, 0.9, 6, 1, true), toonMaterial({ color: 0xff9e6b, side: THREE.DoubleSide, transparent: true, opacity: 0.9 }));
+  const glider = new THREE.Mesh(new THREE.ConeGeometry(1.1, 0.9, 24, 1, true), toonMaterial({ color: 0xff9e6b, side: THREE.DoubleSide, transparent: true, opacity: 0.9 }));
   glider.position.y = 1.1; glider.visible = false; body.add(glider);
 
   g.userData = { body, torso, head, legL, legR, armL, armR, bellows, blob, glider, scarfTail, hatTop };

@@ -249,12 +249,28 @@ export class World {
         const x = isl.x + Math.cos(a) * rad, z = isl.z + Math.sin(a) * rad;
         let y = this.surfaceAt(isl, x, z);
         let cc = c1.clone().lerp(c2, (r / RINGS) * mix2 + (valueNoise2(x * 0.05, z * 0.05, 3) - 0.5) * 0.12);
-        if (r === RINGS) { y = isl.y - 0.4; }
+        // The rim of the top surface must sit BELOW the lowest point the
+        // heightfield reaches anywhere on the island. It used to be a fixed
+        // isl.y - 0.4 while the terrain dips to about isl.y - 1.7, so the
+        // island's own side wall poked up through the grass - the grey circle
+        // reported in the middle of every island.
+        if (r === RINGS) { y = Math.min(y, isl.y - 2.4); }
         pos.push(x, y, z); col.push(cc.r, cc.g, cc.b);
       }
     }
     for (let r = 1; r <= RINGS; r++) {
-      const a0 = r === 1 ? 0 : 1 + (r - 2) * SEG;
+      // The innermost band has no ring inside it - its inner edge is the single
+      // centre vertex - so it must be built as a fan. Treating the centre as if
+      // it were a full ring made a strip that left the middle of every island
+      // open, and the pale underside showed through: the grey circle.
+      if (r === 1) {
+        for (let s = 0; s < SEG; s++) {
+          const q0 = 1 + s, q1 = 1 + ((s + 1) % SEG);
+          idx.push(0, q1, q0);
+        }
+        continue;
+      }
+      const a0 = 1 + (r - 2) * SEG;
       const a1 = 1 + (r - 1) * SEG;
       for (let s = 0; s < SEG; s++) {
         const p0 = a0 + s, p1 = a0 + ((s + 1) % SEG), q0 = a1 + s, q1 = a1 + ((s + 1) % SEG);
@@ -263,8 +279,11 @@ export class World {
         // removed the innermost disc of every island and you saw the pale
         // underside through the hole - the grey circle in the middle of the
         // ranch. Only the fan needs reversing; the rings are already correct.
-        if (r === 1) { idx.push(p0, q1, q0); }
-        else { idx.push(p0, q1, q0); idx.push(p0, p1, q1); }
+        // Measured, not guessed. The centre fan (p0, q1, q0) faces up, but the
+        // ring quads wound with that same order face DOWN, so back-face culling
+        // removed every quad around the centre and you saw the pale underside
+        // through the hole - the grey circle in the middle of every island.
+        idx.push(p0, q1, q0); idx.push(p0, p1, q1);
       }
     }
     const geo = new THREE.BufferGeometry();
@@ -285,13 +304,13 @@ export class World {
     const rim = [];
     for (let s = 0; s < SEG; s++) {
       const a = (s / SEG) * TAU;
-      rim.push([isl.x + Math.cos(a) * isl.r, isl.y - 0.4, isl.z + Math.sin(a) * isl.r]);
+      rim.push([isl.x + Math.cos(a) * isl.r, isl.y - 2.4, isl.z + Math.sin(a) * isl.r]);
     }
     const depth = 8 + isl.r * 0.22;
     for (let s = 0; s < SEG; s++) {
       const a = (s / SEG) * TAU;
       const x = isl.x + Math.cos(a) * isl.r, z = isl.z + Math.sin(a) * isl.r;
-      sp.push(x, isl.y - 0.4, z, x, isl.y - depth, z);
+      sp.push(x, isl.y - 2.4, z, x, isl.y - depth, z);
       sc.push(cd.r, cd.g, cd.b, cr.r, cr.g, cr.b);
     }
     for (let s = 0; s < SEG; s++) {
