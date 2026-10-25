@@ -32,13 +32,13 @@ import { toonMaterial } from './look.js';
 // from a stack of primitives - a coat that tapers, a brim that curves, a boot
 // that rounds off. Points are [radius, height]; the first point should sit on
 // the axis (radius 0) if you want a closed bottom.
-function lathe(points, segments = 24) {
-  return new THREE.LatheGeometry(points.map(([r, y]) => new THREE.Vector2(Math.max(0, r), y)), segments);
+export function lathe(points, segments = 24, arc = Math.PI * 2) {
+  return new THREE.LatheGeometry(points.map(([r, y]) => new THREE.Vector2(Math.max(0, r), y)), segments, arc);
 }
 
 // A smooth, slightly tapered limb. Capsules read as cylinders with caps; a
 // lathe lets the shoulder be wider than the wrist, which is what a sleeve does.
-function limb(topR, botR, len, seg = 14) {
+export function limb(topR, botR, len, seg = 14) {
   const pts = [];
   const steps = 10;
   for (let i = 0; i <= steps; i++) {

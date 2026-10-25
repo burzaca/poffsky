@@ -765,6 +765,9 @@ const SHOTS = {
   island_edge: { player: [30, 26], cam: [-4, 3, -6], look: [45, -4, 40], tod: 0.35 },
   sky_ride:    { player: [104, -26], cam: [0, 16, -30], look: [0, 0, 0], tod: 0.30, fly: true },
   night_mood:  { player: [-6, 6], cam: [3, 2.5, -6], look: [-6, 1.2, 6], tod: 0.88 },
+  // Face-to-face with a villager: the only way to actually judge a character
+  // model is to stand in front of it, so this shot parks the hero facing Pip.
+  villager:    { player: [0, 0], cam: [0, 1.9, -2.6], look: [0, 0, 0], tod: 0.42, npc: 'pip' },
 };
 
 async function boot() {
@@ -799,12 +802,33 @@ async function boot() {
     game.__shotLook = new THREE.Vector3(s.look[0], (s.look[1] ?? 0) + gy, s.look[2]);
     game.camera.position.set(s.player[0] + s.cam[0], gy + s.cam[1], s.player[1] + s.cam[2]);
     game.camera.lookAt(game.__shotLook);
+    if (s.npc) {
+      const n = game.npcs.list.find(o => o.def.id === s.npc);
+      if (n) {
+        // The shot camera is static and aims at __shotLook every frame, so both
+        // the eye point and the target must be derived from the villager's real
+        // position - a hard-coded point aims at nothing once they wander.
+        const np = n.mesh.position;
+        const gy2 = game.world.heightAt(np.x, np.z) ?? 0;
+        n.mesh.position.y = gy2;
+        n.wanderT = 1e9; n.target = null;
+        n.mesh.lookAt(np.x + 0.001, gy2, np.z + 1);   // face +Z, toward the camera
+        const eye = new THREE.Vector3(np.x, gy2 + 1.35, np.z + 2.4);
+        game.__shotLook = new THREE.Vector3(np.x, gy2 + 1.15, np.z);
+        game.camera.position.copy(eye);
+        game.npcs.list.forEach(o => { if (o !== n) o.mesh.visible = false; });
+        game.player.mesh.visible = false;
+      }
+    }
     } catch (e) { console.error('shot pose failed', e); }
   }
   game.loop(performance.now());
 }
 
 boot().catch(e => {
+  // A boot failure used to look exactly like a working title screen: the veil
+  // came off, the menu showed, and nothing in the page said it had crashed.
+  window.__bootErr = String(e && e.stack || e);
   const veil = document.getElementById('loading');
   if (veil) veil.classList.add('hidden');
   const el = document.getElementById('loading-text');
