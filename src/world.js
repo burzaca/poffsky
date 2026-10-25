@@ -406,11 +406,15 @@ export class World {
     const g = new THREE.Group();
     for (const rb of this.ribbons) {
       const len = rb.len;
-      const geo = new THREE.PlaneGeometry(len, rb.width, Math.max(4, Math.floor(len / 6)), 3);
+      // The visible ribbon must span only the corridor between the shores.
+      // Drawn centre-to-centre it lay across the island like a grey disc -
+      // the single most-reported visual bug.
+      const span = Math.max(1, rb.end - rb.start);
+      const geo = new THREE.PlaneGeometry(span, rb.width, Math.max(4, Math.floor(span / 6)), 3);
       geo.rotateX(-Math.PI / 2);
       const mat = new THREE.MeshBasicMaterial({ color: 0xbfe9ff, transparent: true, opacity: 0.16, depthWrite: false });
       const mesh = new THREE.Mesh(geo, mat);
-      const mx = (rb.ax + rb.bx) / 2, mz = (rb.az + rb.bz) / 2;
+      const mx = rb.ax + rb.nx * (rb.start + rb.end) / 2, mz = rb.az + rb.nz * (rb.start + rb.end) / 2;
       const ya = (this.byId.get(rb.from).y + this.byId.get(rb.to).y) / 2 + 2.2;
       mesh.position.set(mx, ya, mz);
       mesh.rotation.y = -Math.atan2(rb.nz, rb.nx);

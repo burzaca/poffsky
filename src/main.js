@@ -692,7 +692,7 @@ class Game {
         const s = rb.streaks[i];
         s.t += dt * (0.06 + s.s * 0.05);
         if (s.t > 1) s.t = 0;
-        const d = s.t * rb.len;
+        const d = rb.start + s.t * (rb.end - rb.start);   // streaks ride the corridor, not the whole span
         attr.setXYZ(i, rb.ax + rb.nx * d + -rb.nz * s.off, rb.y + s.h + Math.sin(this.time + i) * 0.3, rb.az + rb.nz * d + rb.nx * s.off);
       }
       attr.needsUpdate = true;
