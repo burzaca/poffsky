@@ -41,13 +41,13 @@ export const ISLANDS = [
 
 // Gust ribbons: visible wind roads that push you between islands.
 export const RIBBONS = [
-  { from: 'thistledown', to: 'orchardreach', dir: [1, 0.06], speed: 13, lift: 1.6 },
-  { from: 'thistledown', to: 'bloommeadow', dir: [-1, 0.32], speed: 13, lift: 1.6 },
-  { from: 'orchardreach', to: 'geyserisles', dir: [0.62, 0.78], speed: 15, lift: 2.2 },
-  { from: 'bloommeadow', to: 'theruins', dir: [-0.72, -0.68], speed: 15, lift: 2.2 },
-  { from: 'thistledown', to: 'emberscar', dir: [0.3, 0.95], speed: 14, lift: 3.0 },
-  { from: 'thistledown', to: 'frosthold', dir: [-0.4, -0.91], speed: 14, lift: 3.0 },
-  { from: 'geyserisles', to: 'windward', dir: [0.42, -0.9], speed: 16, lift: 3.4 },
+  { from: 'thistledown', to: 'orchardreach', dir: [1, 0.06], speed: 13, lift: 4.5 },
+  { from: 'thistledown', to: 'bloommeadow', dir: [-1, 0.32], speed: 13, lift: 4.5 },
+  { from: 'orchardreach', to: 'geyserisles', dir: [0.62, 0.78], speed: 15, lift: 4.5 },
+  { from: 'bloommeadow', to: 'theruins', dir: [-0.72, -0.68], speed: 15, lift: 4.5 },
+  { from: 'thistledown', to: 'emberscar', dir: [0.3, 0.95], speed: 14, lift: 4.5 },
+  { from: 'thistledown', to: 'frosthold', dir: [-0.4, -0.91], speed: 14, lift: 4.5 },
+  { from: 'geyserisles', to: 'windward', dir: [0.42, -0.9], speed: 16, lift: 4.5 },
 ];
 
 export class World {
