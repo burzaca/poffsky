@@ -130,7 +130,8 @@ export class Player {
     const maxJumps = 1 + this.up.hops;
     // ---- desired movement ----
     // camera-relative basis; see moveBasis() — the same maths the tests assert on
-    const { wx, wz } = moveBasis(this.cam.yaw, inp);
+    const { wx, wz, mag } = moveBasis(this.cam.yaw, inp);
+    if (mag > 0) this.moveYaw = Math.atan2(wx, wz);
 
     const sprinting = inp.sprint && mag > 0;
     const topSpeed = (sprinting ? CFG.player.sprint : CFG.player.speed) * (ctx.storm ? 0.94 : 1);
@@ -140,7 +141,6 @@ export class Player {
       this.dashT -= dt;
       this.vel.x = this.dashDir.x; this.vel.z = this.dashDir.z;
     } else if (mag > 0) {
-      this.moveYaw = Math.atan2(wx, wz);
       const tx = wx * topSpeed, tz = wz * topSpeed;
       this.vel.x = damp(this.vel.x, tx, accel / topSpeed, dt);
       this.vel.z = damp(this.vel.z, tz, accel / topSpeed, dt);
