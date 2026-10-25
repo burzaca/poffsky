@@ -104,11 +104,11 @@ export function buildNPC(def) {
   // body - even a partial one - reads as a skirt, not an apron.
   const apron = new THREE.Mesh(new THREE.BoxGeometry(chestR * 1.5, 0.72, 0.045), toonMaterial({ color: apronCol }));
   apron.position.set(0, 1.02, chestR * 0.92); body.add(apron);
-  const bib = new THREE.Mesh(new THREE.BoxGeometry(chestR * 0.95, 0.26, 0.04), toonMaterial({ color: apronCol }));
-  bib.position.set(0, 1.34, chestR * 0.86); body.add(bib);
+  const bib = new THREE.Mesh(new THREE.BoxGeometry(chestR * 0.9, 0.20, 0.04), toonMaterial({ color: apronCol }));
+  bib.position.set(0, 1.26, chestR * 0.86); body.add(bib);
   for (const sx of [-1, 1]) {
     const strap = new THREE.Mesh(new THREE.BoxGeometry(0.042, 0.30, 0.026), toonMaterial({ color: apronCol }));
-    strap.position.set(chestR * 0.42 * sx, 1.42, chestR * 0.80); strap.rotation.x = -0.16; body.add(strap);
+    strap.position.set(chestR * 0.42 * sx, 1.36, chestR * 0.80); strap.rotation.x = -0.16; body.add(strap);
   }
   const belt = new THREE.Mesh(new THREE.TorusGeometry(hipR * 1.02, 0.042, 8, 22), leather);
   belt.position.y = 1.02; belt.rotation.x = Math.PI / 2; body.add(belt);
