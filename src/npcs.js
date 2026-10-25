@@ -102,10 +102,11 @@ export function buildNPC(def) {
   const apronCol = ({ tilda: 0x9fe3c2, marlow: 0xd9c48a, bellwright: 0x8a7f6d })[def.id] || 0xf0e6d0;
   // A flat panel pinned to the front of the torso. A lathed shell around the
   // body - even a partial one - reads as a skirt, not an apron.
-  const apron = new THREE.Mesh(new THREE.BoxGeometry(chestR * 1.5, 0.72, 0.045), toonMaterial({ color: apronCol }));
-  apron.position.set(0, 1.02, chestR * 0.92); body.add(apron);
-  const bib = new THREE.Mesh(new THREE.BoxGeometry(chestR * 0.9, 0.20, 0.04), toonMaterial({ color: apronCol }));
-  bib.position.set(0, 1.26, chestR * 0.86); body.add(bib);
+  // Waist-high panel: the top must stay below the chin (mouth sits at y 1.49).
+  const apron = new THREE.Mesh(new THREE.BoxGeometry(chestR * 1.45, 0.52, 0.045), toonMaterial({ color: apronCol }));
+  apron.position.set(0, 0.94, chestR * 0.92); body.add(apron);
+  const bib = new THREE.Mesh(new THREE.BoxGeometry(chestR * 0.85, 0.14, 0.04), toonMaterial({ color: apronCol }));
+  bib.position.set(0, 1.20, chestR * 0.86); body.add(bib);
   for (const sx of [-1, 1]) {
     const strap = new THREE.Mesh(new THREE.BoxGeometry(0.042, 0.30, 0.026), toonMaterial({ color: apronCol }));
     strap.position.set(chestR * 0.42 * sx, 1.36, chestR * 0.80); strap.rotation.x = -0.16; body.add(strap);
