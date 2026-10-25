@@ -122,7 +122,11 @@ const norm = (v) => { const l = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] 
 export function toonMaterial(opts = {}) {
   const { color = 0xffffff, vertexColors = true, sway = 0, flatShading = false,
     transparent, opacity, side, emissive = 0x000000, instancedPhase = false } = opts;
-  const mat = new THREE.MeshLambertMaterial({ color, vertexColors, flatShading, transparent, opacity, side, emissive });
+  const mat = new THREE.MeshLambertMaterial({ color, vertexColors, flatShading, emissive });
+  // Only pass the optional keys when given: three.js warns on undefined values.
+  if (transparent !== undefined) mat.transparent = transparent;
+  if (opacity !== undefined) mat.opacity = opacity;
+  if (side !== undefined) mat.side = side;
   // `sway` may be given as a bare amount (0.22) or as { amount, ... }
   const swayAmount = typeof sway === 'number' ? sway : (sway && sway.amount) || 0;
   if (!swayAmount) return mat;
