@@ -134,6 +134,7 @@ export class UI {
 
   // ---------- dialogue ----------
   talk(npc, text, actions = []) {
+    this.releasePointer();
     this.el.dialogue.classList.remove('hidden');
     this.el.dlgName.textContent = (npc.def.name + ' — ' + npc.def.role).toUpperCase();
     this.el.dlgPortrait.innerHTML = '';
@@ -171,6 +172,7 @@ export class UI {
 
   // ---------- shop ----------
   openShop(npc, state, onBuy) {
+    this.releasePointer();
     this.el.shop.classList.remove('hidden');
     this.el.shopTitle.textContent = npc.def.name + ' — ' + npc.def.role;
     this.renderShop(npc, state, onBuy);
@@ -200,7 +202,12 @@ export class UI {
   get shopOpen() { return !this.el.shop.classList.contains('hidden'); }
 
   // ---------- contract board ----------
+  // Any panel we open needs the mouse. Pointer lock hides the cursor and
+  // sends every click to the canvas, so panels are unclickable while it is on.
+  releasePointer() { if (document.pointerLockElement) document.exitPointerLock(); }
+
   openBoard(state, onAccept) {
+    this.releasePointer();
     this.el.board.classList.remove('hidden');
     this.renderBoard(state, onAccept);
   }

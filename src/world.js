@@ -64,7 +64,12 @@ export class World {
     this.ribbons = RIBBONS.map(r => {
       const a = this.byId.get(r.from), b = this.byId.get(r.to);
       const dx = b.x - a.x, dz = b.z - a.z, len = Math.hypot(dx, dz);
-      return { ...r, ax: a.x, az: a.z, bx: b.x, bz: b.z, len, nx: dx / len, nz: dz / len, width: 7.5, yTop: Math.max(a.y, b.y) + 6 };
+      // The corridor runs island-centre to island-centre, but it must only
+      // PUSH in the gap between them. Starting it at the island edge is what
+      // stops the ranch on Thistledown from being wind-blasted.
+      const start = a.r - 2, end = len - (b.r - 2);
+      return { ...r, ax: a.x, az: a.z, bx: b.x, bz: b.z, len, nx: dx / len, nz: dz / len,
+        start, end, width: 7.5, yTop: Math.max(a.y, b.y) + 6 };
     });
     refreshFruitMap();
     this.build();
@@ -177,12 +182,15 @@ export class World {
       for (const rb of this.ribbons) {
         if (rb.from !== isl.id) continue;
         const b = this.byId.get(rb.to);
-        const gap = Math.hypot(b.x - isl.x, b.z - isl.z) - isl.r - b.r;
+        const centre = Math.hypot(b.x - isl.x, b.z - isl.z);
+        const gap = centre - isl.r - b.r;
         if (gap < 26) continue;
+        // pads belong in the gap, not on the island: step out from the shore
         const steps = Math.min(3, Math.floor(gap / 26));
         for (let s = 1; s <= steps; s++) {
-          const t = s / (steps + 1);
-          const x = isl.x + (b.x - isl.x) * t, z = isl.z + (b.z - isl.z) * t;
+          const along = isl.r + (gap * s) / (steps + 1);
+          const x = isl.x + (b.x - isl.x) * (along / centre);
+          const z = isl.z + (b.z - isl.z) * (along / centre);
           const y = Math.max(isl.y, b.y) - 2 - s * 0.4;
           this.props.push({ kind: 'jellyPad', x, y, z, s: 4.6 + rng2() * 1.6, rot: 0, color: 0x8fe6ff, ribbon: rb });
         }
@@ -350,9 +358,11 @@ export class World {
         p => ({ pos: [p.x, p.y + 0.25, p.z], scale: [1, 1, 1], rot: [Math.PI / 2, 0, 0], color: p.color })));
     }
     if (byKind.get('jellyPad')) {
+      // A skyjelly launch pad: a low cushion with its flat face up. As a dome
+      // it read as a white disc pasted on the grass, which is not what it is.
       const mats = L({ color: 0x8fe6ff, transparent: true, opacity: 0.75, flatShading: true, sway: 0.08 });
       g.add(mk(new THREE.SphereGeometry(1, 10, 6, 0, TAU, 0, Math.PI * 0.55), mats, byKind.get('jellyPad'),
-        p => ({ pos: [p.x, p.y, p.z], scale: [p.s, p.s * 0.7, p.s], rot: [0, 0, 0], color: 0xffffff })));
+        p => ({ pos: [p.x, p.y - p.s * 0.18, p.z], scale: [p.s, p.s * 0.55, p.s], rot: [Math.PI, 0, 0], color: 0x6fd0e8 })));
     }
     // grass tufts + flowers
     const tufts = [];

@@ -106,7 +106,13 @@ class Game {
       if (c === 'KeyP' && this.running && !this.paused) this.photograph();
       if (c === 'KeyT' && this.running && !this.paused) this.bellows.drop();
       if (c === 'KeyR' && this.running && !this.paused) this.player.input.blast = true;
-      if (c === 'Escape') this.togglePause();
+      if (c === 'Escape') {
+        // Escape closes the top-most thing, it does not always mean "pause"
+        if (this.ui.talking) { this.ui.endTalk(); }
+        else if (this.ui.shopOpen) { this.ui.closeShop(); }
+        else if (this.ui.boardOpen) { this.ui.closeBoard(); }
+        else this.togglePause();
+      }
       if (c === 'KeyC' && this.running && !this.paused) this.describeHeld();
       if (c === 'KeyH' && this.running) this.showHelp();
     });
@@ -118,6 +124,8 @@ class Game {
     this.canvas.addEventListener('pointerdown', (e) => {
       if (e.button === 2) { this.input.hold = true; }
       if (!this.running || this.paused) return;
+      // a panel is open: the mouse belongs to the panel, not to the camera
+      if (this.ui.talking || this.ui.shopOpen || this.ui.boardOpen) return;
       if (!this.touch.active) {
         this.dragging = true; this.lastPointer = { x: e.clientX, y: e.clientY };
         this.canvas.requestPointerLock && this.canvas.requestPointerLock();

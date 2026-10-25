@@ -274,7 +274,8 @@ export class Player {
   ribbonDist(rb) {
     const px = this.pos.x - rb.ax, pz = this.pos.z - rb.az;
     const along = px * rb.nx + pz * rb.nz;
-    if (along < 0 || along > rb.len) return null;
+    // only the stretch between the two shores is a wind corridor
+    if (along < (rb.start ?? 0) || along > (rb.end ?? rb.len)) return null;
     const side = Math.abs(px * -rb.nz + pz * rb.nx);
     if (side > rb.width * 0.5) return null;
     const y = rb.y;
