@@ -14,63 +14,243 @@ const _v2 = new THREE.Vector3();
 export function buildPoffMesh(species) {
   const g = new THREE.Group();
   const col = new THREE.Color(species.color), acc = new THREE.Color(species.accent);
-  const bodyMat = toonMaterial({ color: col, flatShading: true, sway: 0.05 });
-  const body = new THREE.Mesh(new THREE.SphereGeometry(1, 14, 10), bodyMat);
-  body.scale.set(1, 0.92, 1);
+  const id = String(species.id);
+
+  // ---- deterministic silhouette from the species id (never per-instance) ----
+  const hash = hashString(id);
+  const rnd = mulberry32(hash);
+  const jit = (amt) => (rnd() * 2 - 1) * amt;
+  // archetypes: [maxRadius, top, widestY, bottomExp, topExp]
+  const ARCH = [
+    [1.00, 0.80, -0.10, 2.6, 2.1],   // round and low
+    [0.84, 1.05, -0.15, 2.4, 2.0],   // tall and thin
+    [1.00, 0.95, -0.40, 2.7, 1.6],   // pear
+    [0.94, 1.03, -0.30, 2.2, 1.35],  // teardrop
+    [1.00, 0.70, -0.22, 3.3, 2.5],   // wide and squat
+    [0.93, 0.96, 0.12, 1.9, 2.3],    // egg / top-heavy
+    [0.97, 0.86, -0.55, 3.6, 1.8],   // gumdrop: heavy flat base, domed peak
+    [0.90, 0.92, -0.05, 1.6, 1.7],   // lemon: tapered at both ends
+  ];
+  // High bits + fixed salt: FNV-1a's low bits are weak, and this salt gives
+  // each of the 8 shipped species its own archetype (new ids still hash in).
+  const a0 = ARCH[(hashString('silhouette492:' + id) >>> 16) % ARCH.length];
+  const P = {
+    w: clamp(a0[0] + jit(0.03), 0.8, 1.0),
+    top: clamp(a0[1] + jit(0.04), 0.66, 1.08),
+    bot: -0.92,                                    // keep the old footprint / foot line
+    yw: a0[2] + jit(0.05),
+    pb: a0[3] + jit(0.2),
+    pt: a0[4] + jit(0.15),
+  };
+  // superellipse halves joined at the widest ring (zero slope there -> smooth)
+  const sp = (c, e) => Math.sign(c) * Math.pow(Math.abs(c), 2 / e);
+  const profile = [];
+  const N = 16;
+  for (let i = 0; i <= N; i++) {                   // bottom pole -> widest ring
+    const th = -Math.PI / 2 + (i / N) * (Math.PI / 2);
+    profile.push(new THREE.Vector2(P.w * sp(Math.cos(th), P.pb), P.yw + (P.yw - P.bot) * sp(Math.sin(th), P.pb)));
+  }
+  for (let i = 1; i <= N; i++) {                   // widest ring -> top pole
+    const th = (i / N) * (Math.PI / 2);
+    profile.push(new THREE.Vector2(P.w * sp(Math.cos(th), P.pt), P.yw + (P.top - P.yw) * sp(Math.sin(th), P.pt)));
+  }
+  profile[0].x = 0; profile[profile.length - 1].x = 0;
+  // body radius at height y (profile y is monotonic)
+  const surfR = (y) => {
+    if (y <= P.bot || y >= P.top) return 0;
+    for (let i = 1; i < profile.length; i++) {
+      const p0 = profile[i - 1], p1 = profile[i];
+      if (y <= p1.y) return p0.x + (p1.x - p0.x) * ((y - p0.y) / Math.max(1e-6, p1.y - p0.y));
+    }
+    return 0;
+  };
+  // point on the body surface at height y, yaw a (0 = facing +Z), pushed out by d
+  const onSurf = (y, a, d = 0) => { const r = surfR(y) + d; return new THREE.Vector3(Math.sin(a) * r, y, Math.cos(a) * r); };
+  const sphere = (r, sx = 1, sy = 1, sz = 1, ws = 24, hs = 16) => {
+    const geo = new THREE.SphereGeometry(r, ws, hs); geo.scale(sx, sy, sz); return geo;
+  };
+
+  // ---- body ----
+  const bodyMat = toonMaterial({ color: col, sway: 0.05 });
+  const body = new THREE.Mesh(new THREE.LatheGeometry(profile, 24), bodyMat);
   body.castShadow = true;
   g.add(body);
-  // belly highlight
-  const belly = new THREE.Mesh(new THREE.SphereGeometry(0.72, 10, 8), toonMaterial({ color: acc, flatShading: true, sway: 0.05 }));
-  belly.position.set(0, -0.34, 0.18); belly.scale.set(1, 0.6, 1); g.add(belly);
-  // eyes
+
+  // belly patch: offset copy of the body profile, front arc only
+  const bLo = P.bot + 0.12, bHi = Math.min(P.yw + 0.42, P.top - 0.25);
+  const bellyPts = [];
+  for (let i = 0; i <= 14; i++) {
+    const y = bLo + (bHi - bLo) * (i / 14);
+    bellyPts.push(new THREE.Vector2(surfR(y) + 0.012, y));
+  }
+  const bellyArc = Math.PI * 0.62;
+  const belly = new THREE.Mesh(new THREE.LatheGeometry(bellyPts, 20, -bellyArc / 2, bellyArc), toonMaterial({ color: acc, sway: 0.05 }));
+  g.add(belly);
+
+  // ---- eyes: flattened sclera, pupil + specular, thin upper lid ----
   const eyeG = new THREE.Group();
+  const eyeY = clamp(0.22 + (P.top - 0.9) * 0.4, 0.1, 0.32);
+  const rEye = surfR(eyeY);
+  const eyeA = Math.asin(clamp(0.34 / Math.max(rEye, 0.4), 0, 0.9));
+  const scleraMat = toonMaterial({ color: 0xffffff });
+  const pupilMat = toonMaterial({ color: 0x1a1a24 });
+  const glintMat = toonMaterial({ color: 0xffffff, emissive: 0xffffff });
+  const lidMat = toonMaterial({ color: col.clone().multiplyScalar(0.82) });
   for (const sx of [-1, 1]) {
-    const e = new THREE.Mesh(new THREE.SphereGeometry(0.19, 8, 6), toonMaterial({ color: 0xffffff }));
-    e.position.set(0.34 * sx, 0.22, 0.82);
-    const p = new THREE.Mesh(new THREE.SphereGeometry(0.095, 6, 5), new THREE.MeshBasicMaterial({ color: 0x1a1a24 }));
+    const e = new THREE.Mesh(sphere(0.19, 1, 1.08, 0.55, 28, 18), scleraMat);
+    e.position.copy(onSurf(eyeY, sx * eyeA, -0.035));
+    e.rotation.set(-0.12, sx * eyeA, 0);
+    // pupil: animation drives its position at local z = 0.11
+    const p = new THREE.Mesh(sphere(0.095, 1, 1.1, 0.45, 24, 16), pupilMat);
     p.position.set(0, 0, 0.11);
-    e.add(p); e.userData.pupil = p; eyeG.add(e); g.add(e);
+    const glint = new THREE.Mesh(sphere(0.03, 1, 1, 1, 16, 12), glintMat);
+    glint.position.set(0.035 * -sx + 0.01, 0.04, 0.035);
+    p.add(glint);
+    e.add(p); e.userData.pupil = p;
+    // upper lid: thin cap over the top of the sclera
+    const lid = new THREE.Mesh(new THREE.SphereGeometry(0.205, 28, 10, 0, TAU, 0, Math.PI * 0.36), lidMat);
+    lid.geometry.scale(1, 1.08, 0.62);
+    lid.rotation.x = 0.32;
+    e.add(lid);
+    eyeG.add(e);
   }
+  g.add(eyeG);
   g.userData.eyes = eyeG;
-  // mouth
-  const mouth = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.035, 4, 8, Math.PI), new THREE.MeshBasicMaterial({ color: 0x2a2233 }));
-  mouth.position.set(0, -0.12, 0.92); mouth.rotation.z = Math.PI; g.add(mouth);
-  // little feet
-  const feet = [];
-  for (const sx of [-1, 1]) {
-    const f = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.3, 5), toonMaterial({ color: acc.clone().multiplyScalar(0.85), flatShading: true }));
-    f.position.set(0.36 * sx, -0.95, 0); f.rotation.x = Math.PI; g.add(f); feet.push(f);
-  }
-  g.userData.feet = feet;
-  // species decoration
-  const deco = new THREE.Group();
-  if (species.id.includes('soot') || species.gloom) {
-    const h = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.55, 5), toonMaterial({ color: acc, flatShading: true }));
-    h.position.set(0, 1.05, 0); deco.add(h);
-  }
-  if (species.id === 'flurrin' || species.id === 'sherbetto') {
-    for (let i = 0; i < 3; i++) {
-      const c = new THREE.Mesh(new THREE.OctahedronGeometry(0.22), toonMaterial({ color: 0xdff3ff, flatShading: true }));
-      const a = (i / 3) * TAU; c.position.set(Math.cos(a) * 0.95, 0.55, Math.sin(a) * 0.95); deco.add(c);
+
+  // mouth: small soft smile on the surface
+  const mouthY = eyeY - 0.34;
+  const mouth = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.03, 10, 20, Math.PI), toonMaterial({ color: 0x2a2233 }));
+  mouth.position.copy(onSurf(mouthY, 0, -0.012)); mouth.rotation.z = Math.PI; mouth.rotation.x = -0.15;
+  g.add(mouth);
+
+  // ---- ears or head tuft ----
+  const hasTopDeco = id.includes('soot') || species.gloom || id === 'bumbleaf' || id === 'dandle' || id === 'marmalump' || id === 'toastmallow';
+  const tuftStyle = !hasTopDeco && ((hash >>> 8) & 1) === 1;
+  const furMat = toonMaterial({ color: col, sway: 0.05 });
+  if (tuftStyle) {
+    const tuftPts = [];
+    for (let i = 0; i <= 10; i++) {
+      const t = i / 10;
+      tuftPts.push(new THREE.Vector2(0.11 * Math.sin(Math.PI * Math.pow(t, 0.7)) * (1 - t * 0.6), t * 0.36));
+    }
+    tuftPts[tuftPts.length - 1].x = 0;
+    const tuftGeo = new THREE.LatheGeometry(tuftPts, 20);
+    for (const [lean, s] of [[-0.5, 0.75], [0, 1], [0.5, 0.8]]) {
+      const t = new THREE.Mesh(tuftGeo, furMat);
+      t.position.set(lean * 0.12, P.top - 0.06, 0.02);
+      t.rotation.z = -lean * 0.9; t.scale.setScalar(s);
+      g.add(t);
+    }
+  } else {
+    const earY = P.yw + (P.top - P.yw) * 0.62;
+    const earMat = toonMaterial({ color: acc.clone().lerp(col, 0.4) });
+    for (const sx of [-1, 1]) {
+      const ear = new THREE.Mesh(sphere(0.2, 0.9, 1.45, 0.5), furMat);
+      ear.position.copy(onSurf(earY, sx * 1.05, -0.06));
+      ear.position.y += 0.1;
+      ear.rotation.set(0, sx * 1.05, -sx * 0.45);
+      const inner = new THREE.Mesh(sphere(0.12, 0.85, 1.4, 0.4), earMat);
+      inner.position.set(0, -0.02, 0.06);
+      ear.add(inner);
+      g.add(ear);
     }
   }
-  if (species.id === 'bumbleaf' || species.id === 'dandle') {
-    const leaf = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.5, 4), toonMaterial({ color: 0x63c46f, flatShading: true }));
-    leaf.position.set(0.1, 1.02, 0); leaf.rotation.z = -0.35; deco.add(leaf);
+
+  // ---- arm nubs + tail nub ----
+  const armY = Math.min(P.yw + 0.08, eyeY - 0.3);
+  for (const sx of [-1, 1]) {
+    const arm = new THREE.Mesh(sphere(0.15, 0.85, 0.7, 1.15), furMat);
+    arm.position.copy(onSurf(armY, sx * 1.3, -0.04));
+    arm.rotation.set(0.3, sx * 1.3, -sx * 0.5);
+    g.add(arm);
   }
-  if (species.id === 'marmalump' || species.id === 'toastmallow') {
-    const swirl = new THREE.Mesh(new THREE.TorusKnotGeometry(0.24, 0.07, 24, 4), toonMaterial({ color: acc, flatShading: true }));
-    swirl.position.set(0, 1.0, 0); deco.add(swirl);
+  const tailY = P.bot + (P.yw - P.bot) * 0.5;
+  const tail = new THREE.Mesh(sphere(0.17, 1, 0.95, 0.9), toonMaterial({ color: acc, sway: 0.05 }));
+  tail.position.copy(onSurf(tailY, Math.PI, -0.03));
+  g.add(tail);
+
+  // ---- feet with toe bumps ----
+  const feet = [];
+  const footMat = toonMaterial({ color: acc.clone().multiplyScalar(0.85) });
+  for (const sx of [-1, 1]) {
+    const f = new THREE.Mesh(sphere(0.2, 1, 0.55, 1.3), footMat);
+    f.position.set(0.36 * sx, -0.93, 0.08);
+    f.rotation.y = sx * 0.18;
+    for (const tx of [-1, 0, 1]) {
+      const toe = new THREE.Mesh(sphere(0.06, 1, 0.8, 1, 16, 12), footMat);
+      toe.position.set(tx * 0.1, -0.01, 0.22 - Math.abs(tx) * 0.04);
+      f.add(toe);
+    }
+    g.add(f); feet.push(f);
+  }
+  g.userData.feet = feet;
+
+  // ---- species decoration ----
+  const deco = new THREE.Group();
+  const facet = (geo) => { const n = geo.toNonIndexed(); n.computeVertexNormals(); geo.dispose(); return n; };
+  if (id.includes('soot') || species.gloom) {
+    // curved, tapered horn
+    const hornPts = [];
+    for (let i = 0; i <= 12; i++) {
+      const t = i / 12;
+      hornPts.push(new THREE.Vector2(0.17 * Math.pow(1 - t, 0.85) + 0.012, t * 0.55));
+    }
+    hornPts.push(new THREE.Vector2(0, 0.56));
+    const hornGeo = new THREE.LatheGeometry(hornPts, 20);
+    const pos = hornGeo.attributes.position;
+    for (let i = 0; i < pos.count; i++) { const y = pos.getY(i); pos.setZ(i, pos.getZ(i) + y * y * 0.35); }
+    hornGeo.computeVertexNormals();
+    const h = new THREE.Mesh(hornGeo, toonMaterial({ color: acc }));
+    h.position.set(0, P.top - 0.08, 0.02); h.rotation.x = 0.15;
+    deco.add(h);
+  }
+  if (id === 'flurrin' || id === 'sherbetto') {
+    const crystalPts = [new THREE.Vector2(0, -0.2), new THREE.Vector2(0.09, -0.08), new THREE.Vector2(0.1, 0.08), new THREE.Vector2(0, 0.26)];
+    const cGeo = facet(new THREE.LatheGeometry(crystalPts, 6));
+    const cMat = toonMaterial({ color: 0xdff3ff, emissive: 0x1b2a3a });
+    const cy = P.yw + (P.top - P.yw) * 0.55;
+    for (let i = 0; i < 3; i++) {
+      const a = (i / 3) * TAU + 0.5;
+      const cl = new THREE.Group();
+      cl.position.copy(onSurf(cy, a, -0.05));
+      cl.rotation.set(0, a, 0);
+      const big = new THREE.Mesh(cGeo, cMat); big.rotation.x = 0.7; cl.add(big);
+      const small = new THREE.Mesh(cGeo, cMat); small.scale.setScalar(0.55); small.position.set(0.09, -0.04, 0); small.rotation.set(0.5, 0, -0.6); cl.add(small);
+      deco.add(cl);
+    }
+  }
+  if (id === 'bumbleaf' || id === 'dandle') {
+    const leafPts = [];
+    for (let i = 0; i <= 12; i++) { const t = i / 12; leafPts.push(new THREE.Vector2(0.15 * Math.sin(Math.PI * Math.pow(t, 0.8)), t * 0.5)); }
+    leafPts[leafPts.length - 1].x = 0;
+    const leafGeo = new THREE.LatheGeometry(leafPts, 20); leafGeo.scale(1, 1, 0.28);
+    const leafMat = toonMaterial({ color: 0x63c46f, sway: 0.08 });
+    const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.035, 0.16, 10), toonMaterial({ color: 0x4a8f45 }));
+    stem.position.set(0, P.top + 0.02, 0); deco.add(stem);
+    for (const [rz, s] of [[-0.6, 1], [0.75, 0.72]]) {
+      const leaf = new THREE.Mesh(leafGeo, leafMat);
+      leaf.position.set(0, P.top + 0.08, 0); leaf.rotation.set(0, 0.4, rz); leaf.scale.setScalar(s);
+      deco.add(leaf);
+    }
+  }
+  if (id === 'marmalump' || id === 'toastmallow') {
+    const swirl = new THREE.Mesh(new THREE.TorusKnotGeometry(0.2, 0.065, 96, 12, 2, 3), toonMaterial({ color: acc }));
+    swirl.position.set(0, P.top + 0.06, 0); swirl.rotation.x = Math.PI / 2; swirl.scale.set(1, 1, 0.6);
+    deco.add(swirl);
   }
   if (species.gloom) {
-    const cloud = new THREE.Mesh(new THREE.IcosahedronGeometry(0.5, 0), toonMaterial({ color: 0x2b2440, flatShading: true }));
-    cloud.position.set(0, 1.15, -0.1); deco.add(cloud);
+    const cloud = new THREE.Group();
+    const cMat = toonMaterial({ color: 0x2b2440 });
+    for (const [x, y, z, r] of [[0, 0, 0, 0.3], [-0.28, -0.05, 0.02, 0.22], [0.28, -0.04, -0.02, 0.24], [0.1, 0.16, -0.05, 0.2], [-0.12, 0.12, 0.08, 0.18]]) {
+      const puff = new THREE.Mesh(sphere(r, 1, 0.85, 1), cMat);
+      puff.position.set(x, y, z); cloud.add(puff);
+    }
+    cloud.position.set(0, P.top + 0.25, -0.1);
+    deco.add(cloud);
   }
   g.add(deco);
-  // blob shadow (fake, cheap)
-  // Contact shadow only. The real cast shadow now comes from the sun, so this
-  // is deliberately faint - it exists to stop the poff looking detached when
-  // the sun is directly overhead and the cast shadow hides under it.
+
+  // Ground contact shadow: consumed and parented by the update loop (never added to g).
   const blob = new THREE.Mesh(new THREE.CircleGeometry(1, 14), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.09 }));
   blob.rotation.x = -Math.PI / 2;
   g.userData.body = body; g.userData.blob = blob; g.userData.deco = deco;
