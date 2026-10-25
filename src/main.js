@@ -653,7 +653,9 @@ class Game {
       night: st.isNight(), time: this.time, holdingFruit: !!(this.bellows.held && this.bellows.held.type === 'fruit'),
       magnetRadius: 2.6, repelWraiths: !!st.flags.wraithGuard,
       onJump: () => this.sound.jump(), onDoubleJump: () => this.sound.doubleJump(),
-      onLand: () => this.sound.land(), onBounce: () => this.sound.bounce(),
+      onLand: () => { this.sound.land(); this.creatures.fx.puff(this.player.pos.clone().setY(this.player.pos.y - CFG.player.radius), 0xb9c7a4, 6); },
+      onHardLand: (p, vy) => { this.creatures.fx.puff(p.clone().setY(p.y - CFG.player.radius), 0xa9b795, Math.min(24, Math.round(-vy * 1.4))); this.player.cam.shake = Math.min(1, -vy / 30); },
+      onBounce: () => this.sound.bounce(),
       onDash: () => { this.sound.blow(); this.player.cam.fovKick = 1; },
       onBlast: (p) => { this.sound.blow(); this.creatures.fx.puff(p.clone().setY(p.y - 1), 0xd8e8ff, 12); },
       onFall: () => { this.sound.error(); this.ui.toast('You fell into the cloud sea. Lost ' + CFG.player.respawnCoinsLoss + ' coin.', 'bad'); st.coins = Math.max(0, st.coins - CFG.player.respawnCoinsLoss); },
@@ -685,6 +687,20 @@ class Game {
     this.camera.fov = damp(this.camera.fov, targetFov, 6, dt);
     this.camera.updateProjectionMatrix();
     this.sky.update(dt, st, this.camera, this.player.pos);
+
+    // Wind you can see: a gust is otherwise invisible except in the numbers,
+    // so debris streams past in the wind direction whenever the weather is up.
+    if (st.weather.intensity > 0) {
+      this.windAcc = (this.windAcc || 0) + dt * (8 + st.weather.intensity * 22);
+      while (this.windAcc > 1) {
+        this.windAcc -= 1;
+        const a = Math.random() * Math.PI * 2, r = 6 + Math.random() * 20;
+        const p = this.player.pos.clone().add(new THREE.Vector3(Math.cos(a) * r, (Math.random() - 0.35) * 6, Math.sin(a) * r));
+        const g = this.world.heightAt(p.x, p.z);
+        if (g !== null) p.y = g + 0.4 + Math.random() * 3;
+        this.creatures.fx.gust(p, st.weather.wx, st.weather.wz, 0xd9e6c8, 3);
+      }
+    }
 
     // The lantern answers to the dark, not to the clock: it brightens as the
     // sky darkens, so dusk is enough to need it and noon never wastes it.

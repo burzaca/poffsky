@@ -497,6 +497,19 @@ class FX {
   puff(pos, color, n = 10) { this.emit(pos, color, n, 3.5, 1.6, 0.9, 0.55); }
   burst(pos, color, n = 20) { this.emit(pos, color, n, 7, 4, 1.1, 0.9); }
   hearts(pos, color) { this.emit(pos, color, 6, 2, 3, 0.8, 1.1); }
+  // Debris thrown along the wind, so a gust is something you can see rather
+  // than something a number says. Long-lived and low, so it reads as leaves
+  // and dust skimming the ground, not as smoke.
+  gust(pos, wx, wz, color, n = 3) {
+    for (let i = 0; i < n; i++) {
+      const m = this.get(color);
+      m.alive = true; m.life = 1.4 + Math.random() * 1.2; m.t = 0;
+      m.position.copy(pos);
+      m.vel = new THREE.Vector3(wx * (10 + Math.random() * 8), (Math.random() - 0.4) * 1.6, wz * (10 + Math.random() * 8));
+      m.scale.setScalar(0.35 + Math.random() * 0.5);
+      m.material.opacity = 0.85;
+    }
+  }
   update(dt) {
     for (const m of this.pool) {
       if (!m.alive) continue;

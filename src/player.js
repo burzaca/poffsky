@@ -118,7 +118,9 @@ export class Player {
 
     // A lantern. Nights are the scariest part of the Drift and the player
     // should never be blind in them. On by default; [L] toggles it.
-    this.lantern = new THREE.SpotLight(0xffd9a0, 0, 34, 0.62, 0.55, 1.1);
+    // Wide penumbra and a gentle falloff: a torch pool with a hard rim reads
+    // as a decal, not as light.
+    this.lantern = new THREE.SpotLight(0xffd2a0, 0, 30, 0.85, 0.95, 1.35);
     this.lantern.castShadow = false;
     this.lanternTarget = new THREE.Object3D();
     scene.add(this.lantern); scene.add(this.lanternTarget);
@@ -361,7 +363,7 @@ export class Player {
       this.lantern.position.set(this.pos.x, this.pos.y + 1.3, this.pos.z);
       const fx = Math.sin(c.yaw), fz = Math.cos(c.yaw);
       this.lanternTarget.position.set(
-        this.pos.x + fx * 14, this.pos.y - 2.5 - Math.sin(c.pitch) * 8, this.pos.z + fz * 14);
+        this.pos.x + fx * 11, this.pos.y - 2.2 - Math.sin(c.pitch) * 6, this.pos.z + fz * 11);
     }
     const cp = Math.cos(c.pitch), sp = Math.sin(c.pitch);
     const off = new THREE.Vector3(
