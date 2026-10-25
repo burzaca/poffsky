@@ -7,19 +7,21 @@ import { CFG } from './config.js';
 
 // Camera-relative movement. The camera sits at
 //   target + dist * (-sin yaw, -sin pitch, -cos yaw)
-// so it looks along (sin yaw, ..., cos yaw). That vector is "forward"; the
-// right-hand vector is (cos yaw, ..., -sin yaw). Getting this wrong by a
-// quarter turn is the classic "W moves me left" bug, so it is a pure function
-// with a test rather than inline arithmetic.
+// so it looks along (sin yaw, ..., cos yaw). That vector is "forward". The
+// screen-right vector is up x forward = (-cos yaw, ..., sin yaw) -- note the
+// sign; getting it backwards is the "D strafes left" bug, and getting the
+// forward basis wrong is the "W moves me left" bug. Both are invisible in a
+// screenshot, so this is a pure function with a test, not inline arithmetic.
 export function moveBasis(yaw, inp) {
   const sin = Math.sin(yaw), cos = Math.cos(yaw);
   let mx = (inp.r || 0) - (inp.l || 0);
   let mz = (inp.f || 0) - (inp.b || 0);          // +1 forward, -1 back
   const mag = Math.hypot(mx, mz);
   if (mag > 0) { mx /= mag; mz /= mag; }
+  // right = up x forward = (-cos yaw, 0, sin yaw)
   return {
-    wx: mz * sin + mx * cos,
-    wz: mz * cos - mx * sin,
+    wx: mz * sin - mx * cos,
+    wz: mz * cos + mx * sin,
     mag: Math.min(mag, 1),
   };
 }

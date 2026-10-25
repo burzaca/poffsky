@@ -27,15 +27,15 @@ test('move: W walks along the direction the camera is looking', () => {
 });
 
 test('move: D strafes to the player-visible right, A to the left', () => {
-  const right = moveBasis(0, { r: 1 });
-  assert.ok(near(right.wx, 1) && near(right.wz, 0), 'yaw 0: D is +X');
-  const left = moveBasis(0, { l: 1 });
-  assert.ok(near(left.wx, -1) && near(left.wz, 0), 'yaw 0: A is -X');
-
-  // right must stay perpendicular to forward at any yaw
+  // The camera's own right vector, derived the same way three.js does it:
+  // the camera sits at target + dist * (-sin yaw, ., -cos yaw) and looks at
+  // the target, so view = (sin yaw, 0, cos yaw) and right = up x view.
+  const cameraRight = (yaw) => ({ x: -Math.cos(yaw), z: Math.sin(yaw) });
   for (const yaw of [0, 0.4, 1.1, 2.5, -2.9]) {
-    const f = moveBasis(yaw, { f: 1 }), r = moveBasis(yaw, { r: 1 });
-    assert.ok(Math.abs(f.wx * r.wx + f.wz * r.wz) < 1e-6, 'perpendicular at yaw ' + yaw);
+    const d = moveBasis(yaw, { r: 1 }), a = moveBasis(yaw, { l: 1 });
+    const cr = cameraRight(yaw);
+    assert.ok(d.wx * cr.x + d.wz * cr.z > 0.999, 'D moves screen-right at yaw ' + yaw);
+    assert.ok(a.wx * cr.x + a.wz * cr.z < -0.999, 'A moves screen-left at yaw ' + yaw);
   }
 });
 
