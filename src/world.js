@@ -74,12 +74,16 @@ export class World {
     // A one-way corridor strands you: you ride out, then the same wind pushes
     // you back. Every corridor gets a paired return lane over the same gap,
     // so travel between islands is a round trip and not a gamble.
-    const back = fwd.map(r => ({
-      ...r, from: r.to, to: r.from, reverse: true,
-      ax: r.bx, az: r.bz, bx: r.ax, bz: r.az,
-      nx: -r.nx, nz: -r.nz,
-      start: r.len - r.end, end: r.len - r.start,
-    }));
+    const back = fwd.map(r => {
+      // Offset the return lane sideways. Two lanes on the same line cancel
+      // each other out and the rider stands still in the middle of the gap.
+      const off = r.width * 0.6;
+      const px = -r.nz * off, pz = r.nx * off;
+      return { ...r, from: r.to, to: r.from, reverse: true,
+        ax: r.bx + px, az: r.bz + pz, bx: r.ax + px, bz: r.az + pz,
+        nx: -r.nx, nz: -r.nz,
+        start: r.len - r.end, end: r.len - r.start };
+    });
     this.ribbons = fwd.concat(back);
     refreshFruitMap();
     this.build();
