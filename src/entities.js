@@ -4,10 +4,18 @@
 import * as THREE from '../vendor/three.module.js';
 import { CFG } from './config.js';
 import { Content } from './content.js';
-import { toonMaterial } from './look.js';
+import { toonMaterial, applyLookPass } from './look.js';
 import { clamp, damp, TAU, angleLerp, mulberry32, hashString } from './util.js';
 
 const POFF_SCALE = 0.62;
+
+// toonMaterial asks the shader for vertex colours, and the look recipe is what
+// supplies them. The boot-time pass only sees meshes that exist at boot, so
+// anything spawned later - items, wraiths, and bred poff offspring - had the
+// attribute missing and rendered solid black. Bake each freshly built root here;
+// applyLookPass skips meshes that already have colours, so this is safe to call
+// on every spawn.
+const bakeSpawned = (root, rng) => { applyLookPass(root, rng); return root; };
 const _v = new THREE.Vector3();
 const _v2 = new THREE.Vector3();
 
@@ -295,7 +303,7 @@ export class Creatures {
       x = isl.x + Math.cos(a) * r; z = isl.z + Math.sin(a) * r;
       y = this.world.heightAt(x, z) ?? isl.y;
     }
-    const mesh = buildPoffMesh(sp);
+    const mesh = bakeSpawned(buildPoffMesh(sp), this.rng);
     mesh.position.set(x, y + sp.size * POFF_SCALE, z);
     this.group.add(mesh);
     const p = {
@@ -325,6 +333,7 @@ export class Creatures {
       e.position.set(0.26 * sx, 0.18, 0.6); g.add(e);
     }
     g.position.set(x, y, z);
+    bakeSpawned(g, this.rng);
     this.group.add(g);
     const w = { kind: 'wraith', id: 'wr' + (this._w = (this._w || 0) + 1), pos: new THREE.Vector3(x, y, z), vel: new THREE.Vector3(),
       mesh: g, life: CFG.wraith.life, scared: 0, bob: this.rng() * TAU, mass: 1.0, carrying: 0 };
@@ -348,6 +357,7 @@ export class Creatures {
       const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.3, 4), toonMaterial({ color: 0x5c8f4a }));
       stem.position.y = 0.34; mesh.add(stem);
     }
+    bakeSpawned(mesh, this.rng);
     mesh.position.set(x, y, z);
     this.group.add(mesh);
     const it = { kind: 'item', type, id: 'it' + (this._i = (this._i || 0) + 1), pos: new THREE.Vector3(x, y, z),
