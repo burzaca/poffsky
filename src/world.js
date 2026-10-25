@@ -375,8 +375,13 @@ export class World {
       // A skyjelly launch pad: a low cushion with its flat face up. As a dome
       // it read as a white disc pasted on the grass, which is not what it is.
       const mats = L({ color: 0x8fe6ff, transparent: true, opacity: 0.75, flatShading: true, sway: 0.08 });
+      // SphereGeometry(r, ..., 0, PI*0.55) is a dome whose flat face is at y=0
+      // and whose belly points +Y. Rotating it PI put the flat face down and
+      // buried the belly, so from above it read as a pale disc pasted on the
+      // grass - the single most-reported visual bug. No rotation, base at the
+      // ground, and a low cushion profile instead of a dome.
       g.add(mk(new THREE.SphereGeometry(1, 10, 6, 0, TAU, 0, Math.PI * 0.55), mats, byKind.get('jellyPad'),
-        p => ({ pos: [p.x, p.y - p.s * 0.18, p.z], scale: [p.s, p.s * 0.55, p.s], rot: [Math.PI, 0, 0], color: 0x6fd0e8 })));
+        p => ({ pos: [p.x, p.y - 0.15, p.z], scale: [p.s, p.s * 0.32, p.s], rot: [0, 0, 0], color: 0x6fd0e8 })));
     }
     // grass tufts + flowers
     const tufts = [];
