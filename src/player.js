@@ -218,7 +218,11 @@ export class Player {
         const sgn = along > mid ? -1 : 1;
         this.vel.x = damp(this.vel.x, rb.nx * k * sgn, 4, dt);
         this.vel.z = damp(this.vel.z, rb.nz * k * sgn, 4, dt);
-        this.vel.y = damp(this.vel.y, rb.lift * 1.4, 3, dt);
+        // A gust must actually hold you up. Gravity is 26 and lift is ~2, so
+        // without cancelling gravity here, a player who walks off a shore just
+        // falls through their own ride home.
+        grav = CFG.world.gravity * 0.12;
+        this.vel.y = damp(this.vel.y, rb.lift * 2.2, 5, dt);
         ctx.onRibbon && ctx.onRibbon(rb);
       }
     }
@@ -303,7 +307,7 @@ export class Player {
     const y = rb.y;
     // The corridor must also catch anyone who has walked off the shore and is
     // falling into the gap - that is the whole reason it exists.
-    if (this.pos.y < y - 16 || this.pos.y > y + 7) return null;
+    if (this.pos.y < y - 26 || this.pos.y > y + 8) return null;
     return side;
   }
 
