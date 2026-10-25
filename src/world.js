@@ -258,7 +258,10 @@ export class World {
       const a1 = 1 + (r - 1) * SEG;
       for (let s = 0; s < SEG; s++) {
         const p0 = a0 + s, p1 = a0 + ((s + 1) % SEG), q0 = a1 + s, q1 = a1 + ((s + 1) % SEG);
-        if (r === 1) { idx.push(p0, q1, q0); }
+        // The centre fan must wind the same way as the rings. (centre, q1, q0)
+        // faces DOWN, so the innermost disc was back-face culled and you saw
+        // the pale underside through it - the grey circle on every island.
+        if (r === 1) { idx.push(p0, q0, q1); }
         else { idx.push(p0, q1, q0); idx.push(p0, p1, q1); }
       }
     }
