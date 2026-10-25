@@ -301,7 +301,9 @@ export class Player {
     const side = Math.abs(px * -rb.nz + pz * rb.nx);
     if (side > rb.width * 0.5) return null;
     const y = rb.y;
-    if (this.pos.y < y - 4 || this.pos.y > y + 7) return null;
+    // The corridor must also catch anyone who has walked off the shore and is
+    // falling into the gap - that is the whole reason it exists.
+    if (this.pos.y < y - 16 || this.pos.y > y + 7) return null;
     return side;
   }
 
