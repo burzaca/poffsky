@@ -11,4 +11,4 @@ jobs:
         with:
           node-version: '22'
       - name: Run engine tests
-        run: node --test tests/engine.test.js tests/look.test.js
+        run: node --test tests/engine.test.js tests/look.test.js tests/move.test.js

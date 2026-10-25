@@ -4,6 +4,25 @@
 
 import * as THREE from '../vendor/three.module.js';
 import { CFG } from './config.js';
+
+// Camera-relative movement. The camera sits at
+//   target + dist * (-sin yaw, -sin pitch, -cos yaw)
+// so it looks along (sin yaw, ..., cos yaw). That vector is "forward"; the
+// right-hand vector is (cos yaw, ..., -sin yaw). Getting this wrong by a
+// quarter turn is the classic "W moves me left" bug, so it is a pure function
+// with a test rather than inline arithmetic.
+export function moveBasis(yaw, inp) {
+  const sin = Math.sin(yaw), cos = Math.cos(yaw);
+  let mx = (inp.r || 0) - (inp.l || 0);
+  let mz = (inp.f || 0) - (inp.b || 0);          // +1 forward, -1 back
+  const mag = Math.hypot(mx, mz);
+  if (mag > 0) { mx /= mag; mz /= mag; }
+  return {
+    wx: mz * sin + mx * cos,
+    wz: mz * cos - mx * sin,
+    mag: Math.min(mag, 1),
+  };
+}
 import { clamp, damp, dampVec, TAU, angleLerp } from './util.js';
 import { toonMaterial } from './look.js';
 
@@ -110,13 +129,8 @@ export class Player {
     const inp = this.input;
     const maxJumps = 1 + this.up.hops;
     // ---- desired movement ----
-    let mx = (inp.r - inp.l), mz = (inp.b - inp.f);
-    const mag = Math.hypot(mx, mz);
-    if (mag > 0) { mx /= mag; mz /= mag; }
-    const camYaw = this.cam.yaw;
-    const sin = Math.sin(camYaw), cos = Math.cos(camYaw);
-    const wx = mx * cos - mz * sin;
-    const wz = mx * sin + mz * cos;
+    // camera-relative basis; see moveBasis() — the same maths the tests assert on
+    const { wx, wz } = moveBasis(this.cam.yaw, inp);
 
     const sprinting = inp.sprint && mag > 0;
     const topSpeed = (sprinting ? CFG.player.sprint : CFG.player.speed) * (ctx.storm ? 0.94 : 1);
