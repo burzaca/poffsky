@@ -204,17 +204,20 @@ export class Player {
     this.vel.y -= grav * dt;
 
     // ---- world forces: ribbons, geysers, storm ----
+    // A gust is drift, not velocity: writing into vel directly fights the
+    // movement damping above, so a walking player cancels the wind and a
+    // falling player outruns the lift. Drift is added to the position instead.
+    this.driftX = 0; this.driftZ = 0;
     for (const rb of this.world.ribbons) {
       const d = this.ribbonDist(rb);
       if (d !== null) {
-        const k = rb.speed * this.up.gustRide;
-        this.vel.x = damp(this.vel.x, rb.nx * k, 4, dt);
-        this.vel.z = damp(this.vel.z, rb.nz * k, 4, dt);
+        this.driftX = rb.nx * rb.speed * this.up.gustRide;
+        this.driftZ = rb.nz * rb.speed * this.up.gustRide;
         // A gust must actually hold you up. Gravity is 26 and lift is ~2, so
         // without cancelling gravity here, a player who walks off a shore just
         // falls through their own ride home.
         grav = CFG.world.gravity * 0.12;
-        this.vel.y = damp(this.vel.y, rb.lift * 2.2, 5, dt);
+        this.vel.y = damp(this.vel.y, rb.lift, 4, dt);
         ctx.onRibbon && ctx.onRibbon(rb);
       }
     }
@@ -235,6 +238,7 @@ export class Player {
 
     // ---- integrate + collide ----
     this.pos.addScaledVector(this.vel, dt);
+    this.pos.x += this.driftX * dt; this.pos.z += this.driftZ * dt;
     const g = this.groundAt(this.pos.x, this.pos.z);
     const R = CFG.player.radius;
     if (g !== null) {
