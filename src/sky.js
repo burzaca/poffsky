@@ -8,7 +8,7 @@ const PALETTES = {
   morning: { top: new THREE.Color('#4f8fd8'), hor: new THREE.Color('#cfe9ff'), fog: new THREE.Color('#cfe4f5'), sun: new THREE.Color('#fff4d0'), hemiSky: new THREE.Color('#a8d4f5'), hemiGround: new THREE.Color('#7ba05e'), sunI: 1.35, hemiI: 0.75 },
   midday:  { top: new THREE.Color('#3f86e0'), hor: new THREE.Color('#dff1ff'), fog: new THREE.Color('#dceaf7'), sun: new THREE.Color('#ffffff'), hemiSky: new THREE.Color('#b8e0ff'), hemiGround: new THREE.Color('#89ad68'), sunI: 1.5, hemiI: 0.85 },
   dusk:    { top: new THREE.Color('#3b3f7a'), hor: new THREE.Color('#ff8f6b'), fog: new THREE.Color('#a58aa8'), sun: new THREE.Color('#ff9a5a'), hemiSky: new THREE.Color('#8d7fb8'), hemiGround: new THREE.Color('#5d5a48'), sunI: 0.9, hemiI: 0.5 },
-  night:   { top: new THREE.Color('#0d1230'), hor: new THREE.Color('#2a3560'), fog: new THREE.Color('#232a4a'), sun: new THREE.Color('#9fb4ff'), hemiSky: new THREE.Color('#39456f'), hemiGround: new THREE.Color('#2a3040'), sunI: 0.35, hemiI: 0.3 },
+  night:   { top: new THREE.Color('#141c42'), hor: new THREE.Color('#3a4a80'), fog: new THREE.Color('#2c3557'), sun: new THREE.Color('#b9c9ff'), hemiSky: new THREE.Color('#4d5c8c'), hemiGround: new THREE.Color('#39414f'), sunI: 0.55, hemiI: 0.5 },
   storm:   { top: new THREE.Color('#4a5570'), hor: new THREE.Color('#8b96a8'), fog: new THREE.Color('#7c8798'), sun: new THREE.Color('#d8dee8'), hemiSky: new THREE.Color('#7f8ba0'), hemiGround: new THREE.Color('#5a6152'), sunI: 0.7, hemiI: 0.6 },
 };
 

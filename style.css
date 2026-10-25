@@ -77,6 +77,15 @@ kbd{display:inline-block;padding:1px 6px;border-radius:6px;background:rgba(255,2
 .it-cost{font-variant-numeric:tabular-nums;color:#ffd68a;white-space:nowrap}
 .shop-foot{margin-top:12px;font-size:13px;color:#ffd68a}
 #board-items .done{opacity:.5}
+/* an item you cannot afford is legible, not dead */
+#shop-items button.poor{opacity:.62;cursor:not-allowed}
+#shop-items button.poor .it-cost{color:#ff9d9d}
+/* the always-visible next step */
+.next-label{margin-top:6px}
+#hud-next{color:#ffe9a8;font-size:12.5px}
+/* an item you cannot afford is legible, not dead */
+#shop-items button.poor{opacity:.62;cursor:not-allowed}
+#shop-items button.poor .it-cost{color:#ff9d9d}
 
 /* ---------- title / pause ---------- */
 #title,#pause{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:20;

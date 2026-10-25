@@ -115,6 +115,11 @@ class Game {
       }
       if (c === 'KeyC' && this.running && !this.paused) this.describeHeld();
       if (c === 'KeyH' && this.running) this.showHelp();
+      if (c === 'KeyL' && this.running) {
+        const on = !this.player.lanternOn;
+        this.player.setLantern(on, this.lanternIntensity || 0);
+        this.ui.toast(on ? 'Lantern lit. [L] to put it out.' : 'Lantern out.', '');
+      }
     });
     addEventListener('keyup', (e) => {
       const c = e.code;
@@ -443,7 +448,10 @@ class Game {
       // pickup
       const d = it.pos.distanceTo(this.player.pos);
       if (d < 1.5) {
-        if (it.type === 'down') { st.inv.down += 1; st.stats.collected++; this.sound.coin(); }
+        if (it.type === 'down') {
+          st.inv.down += 1; st.stats.collected++; this.sound.coin();
+          if (st.stats.collected === 1) this.ui.toast('That is down - poff fluff. Penned poffs shed it. Sell it to Pip at the Skyport.', 'good');
+        }
         else if (it.type === 'plume') {
           const sid = it.species || 'unknown';
           st.inv.plumes[sid] = (st.inv.plumes[sid] || 0) + 1;
@@ -609,7 +617,8 @@ class Game {
     this.ui.hideLoading();
     document.getElementById('title').classList.add('hidden');
     this.sound.init(); this.sound.resume();
-    this.ui.toast('Welcome to Thistledown. Marlow is by the pens — he has opinions.', 'good');
+    this.ui.toast('Welcome to Thistledown. The loop: pen a poff, gather its down, sell it to Pip.', 'good');
+    this.ui.toast('Hold [E] to suck a poff up, release [E] to blow it inside a fence.', '');
     this.ui.toast('[M] contracts · [P] photograph · [Esc] pause', '');
   }
 
@@ -668,6 +677,12 @@ class Game {
     this.camera.fov = damp(this.camera.fov, targetFov, 6, dt);
     this.camera.updateProjectionMatrix();
     this.sky.update(dt, st, this.camera, this.player.pos);
+
+    // The lantern answers to the dark, not to the clock: it brightens as the
+    // sky darkens, so dusk is enough to need it and noon never wastes it.
+    const skyLum = this.sky.cur.top.r * 0.2126 + this.sky.cur.top.g * 0.7152 + this.sky.cur.top.b * 0.0722;
+    this.lanternIntensity = this.player.lanternOn ? (1 - Math.min(1, skyLum * 2.4)) * 3.0 : 0;
+    this.player.lantern.intensity = this.lanternIntensity;
 
     // ribbon streak animation
     for (const rb of this.world.ribbons) {

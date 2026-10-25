@@ -442,11 +442,10 @@ export class World {
         rail.rotation.y = -Math.atan2(nz - z, nx - x);
         post.add(rail);
       }
-      const pad = new THREE.Mesh(new THREE.CircleGeometry(c.r, 32), new THREE.MeshBasicMaterial({ color: 0x9ef7a0, transparent: true, opacity: 0.07 }));
-      pad.rotation.x = -Math.PI / 2; pad.position.set(c.x, c.y + 0.04, c.z);
-      post.add(pad);
+      // No floor disc: a flat circle cannot follow the bumpy heightfield, so it
+      // poked through the grass as a grey disc. The fence already reads as a pen.
       post.visible = c.unlocked;
-      c.mesh = post; c.padMesh = pad;
+      c.mesh = post; c.padMesh = null;
       g.add(post);
     }
     return g;

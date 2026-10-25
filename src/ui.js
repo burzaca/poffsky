@@ -10,6 +10,7 @@ export class UI {
       clock: $('#clock-fill'), cTitle: $('#hud-contract-title'), cProg: $('#hud-contract-progress'),
       prompt: $('#prompt'), tank: $('#tank-fill'), tankWrap: document.querySelector('.tank'),
       toasts: $('#toasts'), minimap: $('#minimap'), weather: $('#hud-weather'),
+      next: $('#hud-next'),
       dialogue: $('#dialogue'), dlgName: $('#dlg-name'), dlgText: $('#dlg-text'),
       dlgActions: $('#dlg-actions'), dlgPortrait: $('#dlg-portrait'),
       shop: $('#shop'), shopItems: $('#shop-items'), shopTitle: $('#shop-title'), shopCoins: $('#shop-coins'),
@@ -41,6 +42,7 @@ export class UI {
       this.el.cTitle.textContent = 'Visit the notice board';
       this.el.cProg.textContent = '';
     }
+    if (this.el.next) this.el.next.textContent = this.nextStep(state);
     const w = state.weather;
     if (w.kind !== 'clear') {
       this.el.weather.classList.remove('hidden');
@@ -55,6 +57,17 @@ export class UI {
     if (!text) { this.el.prompt.classList.remove('on'); return; }
     this.el.prompt.textContent = text;
     this.el.prompt.classList.add('on');
+  }
+
+  // One plain-language next step, always visible. A player who cannot work out
+  // what to do next stops playing; this is the answer to "what is the point".
+  nextStep(state) {
+    const st = state;
+    if (st.contracts.active) return st.contractText(st.contracts.active);
+    if (st.inv.down >= 5) return 'Sell your down to Pip at the Skyport [F]';
+    const penned = Object.values(st.pennedSpecies || {}).reduce((s, n) => s + n, 0);
+    if (!penned) return 'Suck a poff with [E], blow it inside a fence';
+    return 'Read the notice board [F] for a contract';
   }
 
   toast(text, kind = '') {
@@ -190,9 +203,10 @@ export class UI {
     for (const it of items) {
       const b = document.createElement('button');
       const afford = state.coins >= it.cost;
-      b.disabled = !afford;
-      b.innerHTML = `<span><span class="it-name">${it.name}</span><div class="it-sub">${describeEffect(it.effect)}</div></span><span class="it-cost">${it.cost}c</span>`;
-      b.onclick = () => { onBuy(it); this.renderShop(npc, state, onBuy); };
+      // A greyed-out button with no reason reads as broken. Say why instead.
+      if (!afford) b.classList.add('poor');
+      b.innerHTML = `<span><span class="it-name">${it.name}</span><div class="it-sub">${describeEffect(it.effect)}</div></span><span class="it-cost">${afford ? it.cost + 'c' : it.cost + 'c \u2014 need ' + (it.cost - state.coins) + ' more'}</span>`;
+      b.onclick = () => { if (!afford) { this.toast('Not enough coin. Sell more down first.', 'bad'); return; } onBuy(it); this.renderShop(npc, state, onBuy); };
       this.el.shopItems.appendChild(b);
     }
     this.el.shopCoins.textContent = state.coins + ' coin' + (state.coins === 1 ? '' : 's') + '  ·  press F again to close';

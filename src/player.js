@@ -115,6 +115,15 @@ export class Player {
     this.mesh = buildHero();
     scene.add(this.mesh);
     scene.add(this.mesh.userData.blob);
+
+    // A lantern. Nights are the scariest part of the Drift and the player
+    // should never be blind in them. On by default; [L] toggles it.
+    this.lantern = new THREE.SpotLight(0xffd9a0, 0, 34, 0.62, 0.55, 1.1);
+    this.lantern.castShadow = false;
+    this.lanternTarget = new THREE.Object3D();
+    scene.add(this.lantern); scene.add(this.lanternTarget);
+    this.lantern.target = this.lanternTarget;
+    this.lanternOn = true;
     this.input = { f: 0, b: 0, l: 0, r: 0, sprint: false, jump: false, dash: false, blast: false };
     this.jumpQueued = false;
     this.cam = { yaw: 0, pitch: 0.32, dist: CFG.camera.distance, shake: 0 };
@@ -126,6 +135,11 @@ export class Player {
   queueJump() { this.jumpQueued = true; }
 
   groundAt(x, z) { return this.world.heightAt(x, z); }
+
+  setLantern(on, intensity) {
+    this.lanternOn = !!on;
+    this.lantern.intensity = on ? intensity : 0;
+  }
 
   update(dt, ctx) {
     const inp = this.input;
@@ -193,9 +207,13 @@ export class Player {
     for (const rb of this.world.ribbons) {
       const d = this.ribbonDist(rb);
       if (d !== null) {
+        // A corridor pushes toward whichever end you are nearer the far side of,
+        // so the same ribbon that carries you out also carries you home.
         const k = rb.speed * this.up.gustRide;
-        this.vel.x = damp(this.vel.x, rb.nx * k, 4, dt);
-        this.vel.z = damp(this.vel.z, rb.nz * k, 4, dt);
+        const along = (this.pos.x - rb.ax) * rb.nx + (this.pos.z - rb.az) * rb.nz;
+        const sgn = along > rb.len * 0.5 ? -1 : 1;
+        this.vel.x = damp(this.vel.x, rb.nx * k * sgn, 4, dt);
+        this.vel.z = damp(this.vel.z, rb.nz * k * sgn, 4, dt);
         this.vel.y = damp(this.vel.y, rb.lift * 1.4, 3, dt);
         ctx.onRibbon && ctx.onRibbon(rb);
       }
@@ -330,6 +348,13 @@ export class Player {
     const c = this.cam;
     c.shake = Math.max(0, c.shake - dt * 2.2);
     const target = new THREE.Vector3(this.pos.x, this.pos.y + CFG.camera.height * 0.55, this.pos.z);
+    // the lantern rides with us and shines where we are looking
+    if (this.lanternOn) {
+      this.lantern.position.set(this.pos.x, this.pos.y + 1.3, this.pos.z);
+      const fx = Math.sin(c.yaw), fz = Math.cos(c.yaw);
+      this.lanternTarget.position.set(
+        this.pos.x + fx * 14, this.pos.y - 2.5 - Math.sin(c.pitch) * 8, this.pos.z + fz * 14);
+    }
     const cp = Math.cos(c.pitch), sp = Math.sin(c.pitch);
     const off = new THREE.Vector3(
       -Math.sin(c.yaw) * cp,
