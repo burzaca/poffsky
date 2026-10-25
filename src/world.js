@@ -61,7 +61,7 @@ export class World {
     this.geysers = [];    // {x,z,r,power}
     this.corrals = [];    // {id,x,z,r,unlocked}
     this.structures = [];
-    this.ribbons = RIBBONS.map(r => {
+    const fwd = RIBBONS.map(r => {
       const a = this.byId.get(r.from), b = this.byId.get(r.to);
       const dx = b.x - a.x, dz = b.z - a.z, len = Math.hypot(dx, dz);
       // The corridor runs island-centre to island-centre, but it must only
@@ -71,6 +71,16 @@ export class World {
       return { ...r, ax: a.x, az: a.z, bx: b.x, bz: b.z, len, nx: dx / len, nz: dz / len,
         start, end, width: 7.5, yTop: Math.max(a.y, b.y) + 6 };
     });
+    // A one-way corridor strands you: you ride out, then the same wind pushes
+    // you back. Every corridor gets a paired return lane over the same gap,
+    // so travel between islands is a round trip and not a gamble.
+    const back = fwd.map(r => ({
+      ...r, from: r.to, to: r.from, reverse: true,
+      ax: r.bx, az: r.bz, bx: r.ax, bz: r.az,
+      nx: -r.nx, nz: -r.nz,
+      start: r.len - r.end, end: r.len - r.start,
+    }));
+    this.ribbons = fwd.concat(back);
     refreshFruitMap();
     this.build();
   }

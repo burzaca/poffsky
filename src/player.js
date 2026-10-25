@@ -207,17 +207,9 @@ export class Player {
     for (const rb of this.world.ribbons) {
       const d = this.ribbonDist(rb);
       if (d !== null) {
-        // A corridor pushes toward whichever end you are nearer the far side of,
-        // so the same ribbon that carries you out also carries you home.
         const k = rb.speed * this.up.gustRide;
-        const along = (this.pos.x - rb.ax) * rb.nx + (this.pos.z - rb.az) * rb.nz;
-        // Flip at the middle of the CORRIDOR, not of the whole ribbon: the
-        // corridor only exists between the shores, so a ribbon-length midpoint
-        // would reverse the push a fifth of the way across and throw you back.
-        const mid = ((rb.start ?? 0) + (rb.end ?? rb.len)) * 0.5;
-        const sgn = along > mid ? -1 : 1;
-        this.vel.x = damp(this.vel.x, rb.nx * k * sgn, 4, dt);
-        this.vel.z = damp(this.vel.z, rb.nz * k * sgn, 4, dt);
+        this.vel.x = damp(this.vel.x, rb.nx * k, 4, dt);
+        this.vel.z = damp(this.vel.z, rb.nz * k, 4, dt);
         // A gust must actually hold you up. Gravity is 26 and lift is ~2, so
         // without cancelling gravity here, a player who walks off a shore just
         // falls through their own ride home.
