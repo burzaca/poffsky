@@ -263,7 +263,7 @@ export class World {
         // removed the innermost disc of every island and you saw the pale
         // underside through the hole - the grey circle in the middle of the
         // ranch. Only the fan needs reversing; the rings are already correct.
-        if (r === 1) { idx.push(p0, q0, q1); }
+        if (r === 1) { idx.push(p0, q1, q0); }
         else { idx.push(p0, q1, q0); idx.push(p0, p1, q1); }
       }
     }
