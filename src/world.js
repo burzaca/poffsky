@@ -258,10 +258,12 @@ export class World {
       const a1 = 1 + (r - 1) * SEG;
       for (let s = 0; s < SEG; s++) {
         const p0 = a0 + s, p1 = a0 + ((s + 1) % SEG), q0 = a1 + s, q1 = a1 + ((s + 1) % SEG);
-        // Winding verified by measuring triangle normals at runtime: this is
-        // the orientation that faces up. (Reversing it culls the whole island
-        // top and shows the pale underside instead.)
-        if (r === 1) { idx.push(p0, q1, q0); }
+        // Measured at runtime, not guessed: the ring quads wind upward, but
+        // the centre fan (p0, q1, q0) winds DOWNWARD. Back-face culling then
+        // removed the innermost disc of every island and you saw the pale
+        // underside through the hole - the grey circle in the middle of the
+        // ranch. Only the fan needs reversing; the rings are already correct.
+        if (r === 1) { idx.push(p0, q0, q1); }
         else { idx.push(p0, q1, q0); idx.push(p0, p1, q1); }
       }
     }
