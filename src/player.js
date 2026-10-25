@@ -252,15 +252,17 @@ export class Player {
       } else {
         this.grounded = false;
       }
-      // wall at the island rim: if the ground drops away steeply just ahead, push back
+      // A soft nudge away from the rim, not a wall. It used to be strong
+      // enough to cancel the walk speed, which meant a player could never
+      // step off an island on purpose - and the gust lanes start at the rim.
       const aheadX = this.pos.x + this.vel.x * dt * 1.5, aheadZ = this.pos.z + this.vel.z * dt * 1.5;
       const ga = this.groundAt(aheadX, aheadZ);
       if (ga !== null && ga - (g) > 1.6 && this.pos.y < g + 1.2) {
         const isl = this.world.islandAt(this.pos.x, this.pos.z);
         if (isl) {
           const nx = (this.pos.x - isl.x), nz = (this.pos.z - isl.z), nl = Math.hypot(nx, nz) || 1;
-          this.vel.x -= (nx / nl) * 12 * dt * 6;
-          this.vel.z -= (nz / nl) * 12 * dt * 6;
+          this.vel.x -= (nx / nl) * 12 * dt * 1.2;
+          this.vel.z -= (nz / nl) * 12 * dt * 1.2;
         }
       }
     } else {
