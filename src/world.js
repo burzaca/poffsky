@@ -258,11 +258,13 @@ export class World {
       const a1 = 1 + (r - 1) * SEG;
       for (let s = 0; s < SEG; s++) {
         const p0 = a0 + s, p1 = a0 + ((s + 1) % SEG), q0 = a1 + s, q1 = a1 + ((s + 1) % SEG);
-        // The centre fan must wind the same way as the rings. (centre, q1, q0)
-        // faces DOWN, so the innermost disc was back-face culled and you saw
-        // the pale underside through it - the grey circle on every island.
+        // Winding measured, not guessed: with rings running counter-clockwise
+        // in (x,z), (p0, q1, q0) faces DOWN. The ring quads were therefore
+        // back-face culled from above and you saw the pale underside through
+        // them - the grey circle reported on every island. The centre fan was
+        // already correct, which is why only the inner disc showed the hole.
         if (r === 1) { idx.push(p0, q0, q1); }
-        else { idx.push(p0, q1, q0); idx.push(p0, p1, q1); }
+        else { idx.push(p0, q0, q1); idx.push(p0, q1, p1); }
       }
     }
     const geo = new THREE.BufferGeometry();
